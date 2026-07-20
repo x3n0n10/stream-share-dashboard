@@ -49,4 +49,4 @@ services:
       GLUETUN_API_KEY: ""
       # GLUETUN_USER: ""
       # GLUETUN_PASSWORD: ""
-      # GLUETUN_STATUS_PATH: "/v1/openvpn/status"  # override if your gluetun version uses /v1/vpn/status instead
+      # GLUETUN_STATUS_PATH: "/v1/openvpn/status"  # override for older gluetun versions without /v1/vpn/status

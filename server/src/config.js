@@ -37,11 +37,11 @@ function readInstances(env) {
 }
 
 // Gluetun's control server API. GLUETUN_URL is the only required var — leave
-// it unset to disable the VPN page entirely. GLUETUN_STATUS_PATH exists as an
-// escape hatch: the status/start/stop endpoint has moved across gluetun
-// versions (/v1/openvpn/status historically, also used for WireGuard; some
-// newer releases expose /v1/vpn/status instead) — override it if the default
-// doesn't match your gluetun version.
+// it unset to disable the VPN page entirely. /v1/vpn/status is gluetun's
+// current, unified status/start/stop endpoint for both OpenVPN and WireGuard
+// (https://github.com/qdm12/gluetun-wiki/blob/main/setup/advanced/control-server.md#openvpn-and-wireguard).
+// GLUETUN_STATUS_PATH is an escape hatch for older gluetun versions that only
+// have the legacy /v1/openvpn/status path.
 //
 // Auth: gluetun's control server supports either an API key (X-Api-Key
 // header) or HTTP Basic Auth, depending on how its roles config is set up —
@@ -57,7 +57,7 @@ function readGluetun(env) {
       env.GLUETUN_USER && env.GLUETUN_PASSWORD
         ? { user: env.GLUETUN_USER, password: env.GLUETUN_PASSWORD }
         : null,
-    statusPath: env.GLUETUN_STATUS_PATH || "/v1/openvpn/status",
+    statusPath: env.GLUETUN_STATUS_PATH || "/v1/vpn/status",
     timeoutMs: Math.max(1000, Number(env.GLUETUN_TIMEOUT_MS) || 5000),
   };
 }
