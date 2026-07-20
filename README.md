@@ -132,19 +132,19 @@ GLUETUN_API_KEY: ""
 # GLUETUN_USER: ""
 # GLUETUN_PASSWORD: ""
 
-# GLUETUN_STATUS_PATH: "/v1/openvpn/status"  # override if needed, see below
+# GLUETUN_STATUS_PATH: "/v1/openvpn/status"  # override for older gluetun versions, see below
 ```
 
 Leave `GLUETUN_URL` blank to hide the page entirely.
 
 This talks to gluetun's [control server
 API](https://github.com/qdm12/gluetun-wiki/blob/main/setup/advanced/control-server.md).
-`/v1/openvpn/status` is the long-documented status/start/stop endpoint — it's
-also what's used for WireGuard connections despite the name. If your gluetun
-version has moved this (e.g. to `/v1/vpn/status`), override it with
-`GLUETUN_STATUS_PATH`. The VPN page has a "Show raw gluetun response" toggle
-so you can immediately see the actual JSON shape your gluetun version
-returns if something looks off.
+By default it uses `/v1/vpn/status`, gluetun's current unified status/start/stop
+endpoint for both OpenVPN and WireGuard. Older gluetun versions only have the
+legacy `/v1/openvpn/status` path (used for both VPN types despite the name) —
+set `GLUETUN_STATUS_PATH` to that if `/v1/vpn/status` 404s for you. The VPN
+page has a "Show raw gluetun response" toggle so you can immediately see the
+actual JSON shape your gluetun version returns if something looks off.
 
 **Stopping the VPN is a real action**, not just a UI toggle — it calls
 gluetun's control server directly and will interrupt or expose whatever
