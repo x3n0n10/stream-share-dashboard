@@ -1,0 +1,36 @@
+services:
+  dashboard:
+    build: .
+    # Or, once published: image: x3n0n10/stream-share-dashboard:latest
+    container_name: stream-share-dashboard
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      DASHBOARD_TITLE: "Stream Share Dashboard"
+
+      # How often the browser re-polls the backend (ms), and how long the
+      # backend waits for a single instance before giving up on it (ms).
+      POLL_INTERVAL_MS: "15000"
+      INSTANCE_TIMEOUT_MS: "6000"
+
+      # Optional: put the whole dashboard behind HTTP basic auth (it shows
+      # viewer usernames/IPs pulled from every instance below). Leave both
+      # blank to disable.
+      DASHBOARD_USER: ""
+      DASHBOARD_PASSWORD: ""
+
+      # --- stream-share instances to monitor ---
+      # Add as many as you like by incrementing the number (INSTANCE_2_*,
+      # INSTANCE_3_*, ...) — the dashboard stops at the first missing _URL.
+      # URL is each instance's base address (no trailing path); API_KEY is
+      # that instance's INTERNAL_API_KEY (see its own docker-compose.yml).
+
+      INSTANCE_1_NAME: "Main"
+      INSTANCE_1_URL: "http://stream-share-main:8080"
+      INSTANCE_1_API_KEY: ""
+
+      # INSTANCE_2_NAME: "Backup"
+      # INSTANCE_2_URL: "http://stream-share-backup:8080"
+      # INSTANCE_2_API_KEY: ""
