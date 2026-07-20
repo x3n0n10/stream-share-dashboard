@@ -125,7 +125,13 @@ buttons:
 
 ```yaml
 GLUETUN_URL: "http://gluetun:8000"   # gluetun's control server, same network
-GLUETUN_API_KEY: ""                  # only if your control server requires one
+
+# Gluetun's control server uses either an API key OR HTTP Basic Auth,
+# depending on its roles config — set whichever one matches yours.
+GLUETUN_API_KEY: ""
+# GLUETUN_USER: ""
+# GLUETUN_PASSWORD: ""
+
 # GLUETUN_STATUS_PATH: "/v1/openvpn/status"  # override if needed, see below
 ```
 

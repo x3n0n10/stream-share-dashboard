@@ -44,5 +44,9 @@ services:
       # gluetun service's control server (default port 8000); if it's on the
       # same docker-compose network you can use the service name as host.
       GLUETUN_URL: ""                  # e.g. "http://gluetun:8000"
-      GLUETUN_API_KEY: ""              # only if your control server requires one
+      # Gluetun's control server uses either an API key OR HTTP Basic Auth,
+      # depending on its roles config — set whichever one matches yours.
+      GLUETUN_API_KEY: ""
+      # GLUETUN_USER: ""
+      # GLUETUN_PASSWORD: ""
       # GLUETUN_STATUS_PATH: "/v1/openvpn/status"  # override if your gluetun version uses /v1/vpn/status instead
