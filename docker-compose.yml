@@ -1,0 +1,48 @@
+services:
+  dashboard:
+    build: .
+    # To test a specific commit without building locally, replace the line
+    # above with a published image instead — see docker-compose.dev.yml for
+    # a ready-made override, or just use one of these tags directly:
+    #   image: ghcr.io/x3n0n10/stream-share-dashboard:dev            # latest on main
+    #   image: ghcr.io/x3n0n10/stream-share-dashboard:dev-<shortsha> # one specific commit
+    container_name: stream-share-dashboard
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      DASHBOARD_TITLE: "Stream Share Dashboard"
+
+      # How often the browser re-polls the backend (ms), and how long the
+      # backend waits for a single instance before giving up on it (ms).
+      POLL_INTERVAL_MS: "15000"
+      INSTANCE_TIMEOUT_MS: "6000"
+
+      # Optional: put the whole dashboard behind HTTP basic auth (it shows
+      # viewer usernames/IPs pulled from every instance below). Leave both
+      # blank to disable.
+      DASHBOARD_USER: ""
+      DASHBOARD_PASSWORD: ""
+
+      # --- stream-share instances to monitor ---
+      # Add as many as you like by incrementing the number (INSTANCE_2_*,
+      # INSTANCE_3_*, ...) — the dashboard stops at the first missing _URL.
+      # URL is each instance's base address (no trailing path); API_KEY is
+      # that instance's INTERNAL_API_KEY (see its own docker-compose.yml).
+
+      INSTANCE_1_NAME: "Main"
+      INSTANCE_1_URL: "http://stream-share-main:8080"
+      INSTANCE_1_API_KEY: ""
+
+      # INSTANCE_2_NAME: "Backup"
+      # INSTANCE_2_URL: "http://stream-share-backup:8080"
+      # INSTANCE_2_API_KEY: ""
+
+      # --- Optional: gluetun VPN control (adds a "VPN" page) ---
+      # Leave GLUETUN_URL blank to hide the page entirely. Point it at your
+      # gluetun service's control server (default port 8000); if it's on the
+      # same docker-compose network you can use the service name as host.
+      GLUETUN_URL: ""                  # e.g. "http://gluetun:8000"
+      GLUETUN_API_KEY: ""              # only if your control server requires one
+      # GLUETUN_STATUS_PATH: "/v1/openvpn/status"  # override if your gluetun version uses /v1/vpn/status instead
