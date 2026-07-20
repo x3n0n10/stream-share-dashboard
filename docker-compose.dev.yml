@@ -1,0 +1,20 @@
+# Override that swaps the locally-built image for a published dev image, so
+# you can test a commit without building it yourself. Every push gets its own
+# tag; "dev" always points at the latest commit on main.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+#
+# To pin a specific commit instead of "latest on main", set DASHBOARD_IMAGE:
+#   DASHBOARD_IMAGE=ghcr.io/x3n0n10/stream-share-dashboard:dev-abc1234 \
+#     docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+#
+# GHCR packages are private by default. Either make the package public in
+# the repo's GitHub Packages settings, or authenticate first:
+#   echo "$GITHUB_TOKEN" | docker login ghcr.io -u <your-github-username> --password-stdin
+
+services:
+  dashboard:
+    build: !reset null
+    image: ${DASHBOARD_IMAGE:-ghcr.io/x3n0n10/stream-share-dashboard:dev}
+    pull_policy: always

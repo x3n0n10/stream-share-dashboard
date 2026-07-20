@@ -63,6 +63,40 @@ Then open `http://localhost:3000`. If an instance is unreachable or its key
 is wrong, the dashboard keeps working for the rest — that instance just shows
 as offline with the error it hit.
 
+## Testing a commit without building it yourself
+
+Every push to this repo publishes a Docker image via the `Dev Image` GitHub
+Actions workflow (`.github/workflows/dev-image.yml`), no build required on
+your side:
+
+- `ghcr.io/x3n0n10/stream-share-dashboard:dev-<short-sha>` — one specific
+  commit, always available, never moves.
+- `ghcr.io/x3n0n10/stream-share-dashboard:dev` — floating tag that always
+  points at the latest commit on `main`.
+
+To run one of these instead of building locally, use the provided override:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+```
+
+That pulls `:dev` by default; pin a specific commit with:
+
+```bash
+DASHBOARD_IMAGE=ghcr.io/x3n0n10/stream-share-dashboard:dev-abc1234 \
+  docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+```
+
+GHCR packages are private by default. Either mark the package public under
+the repo's *Packages* settings on GitHub, or authenticate first:
+
+```bash
+echo "$GITHUB_TOKEN" | docker login ghcr.io -u <your-github-username> --password-stdin
+```
+
+(A classic PAT with `read:packages` scope works too, in place of
+`$GITHUB_TOKEN`.)
+
 ## What it shows
 
 - **Overview** — global totals plus a live status card per instance and a
