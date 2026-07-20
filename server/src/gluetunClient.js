@@ -9,6 +9,19 @@ class GluetunError extends Error {
   }
 }
 
+// Basic Auth takes precedence over the API key when both are configured,
+// since gluetun's roles config ties a client to exactly one auth method.
+function authHeaders(gluetun) {
+  if (gluetun.basicAuth) {
+    const encoded = Buffer.from(`${gluetun.basicAuth.user}:${gluetun.basicAuth.password}`).toString("base64");
+    return { Authorization: `Basic ${encoded}` };
+  }
+  if (gluetun.apiKey) {
+    return { "X-Api-Key": gluetun.apiKey };
+  }
+  return {};
+}
+
 async function request(gluetun, path, options = {}) {
   const url = `${gluetun.url}${path}`;
   const controller = new AbortController();
@@ -19,7 +32,7 @@ async function request(gluetun, path, options = {}) {
       ...options,
       headers: {
         "Content-Type": "application/json",
-        ...(gluetun.apiKey ? { "X-Api-Key": gluetun.apiKey } : {}),
+        ...authHeaders(gluetun),
         ...(options.headers || {}),
       },
       signal: controller.signal,

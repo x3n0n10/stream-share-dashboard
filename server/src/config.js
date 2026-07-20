@@ -42,6 +42,10 @@ function readInstances(env) {
 // versions (/v1/openvpn/status historically, also used for WireGuard; some
 // newer releases expose /v1/vpn/status instead) — override it if the default
 // doesn't match your gluetun version.
+//
+// Auth: gluetun's control server supports either an API key (X-Api-Key
+// header) or HTTP Basic Auth, depending on how its roles config is set up —
+// set whichever one matches. If both are set, Basic Auth is used.
 function readGluetun(env) {
   const url = (env.GLUETUN_URL || "").replace(/\/+$/, "");
   if (!url) return null;
@@ -49,6 +53,10 @@ function readGluetun(env) {
   return {
     url,
     apiKey: env.GLUETUN_API_KEY || "",
+    basicAuth:
+      env.GLUETUN_USER && env.GLUETUN_PASSWORD
+        ? { user: env.GLUETUN_USER, password: env.GLUETUN_PASSWORD }
+        : null,
     statusPath: env.GLUETUN_STATUS_PATH || "/v1/openvpn/status",
     timeoutMs: Math.max(1000, Number(env.GLUETUN_TIMEOUT_MS) || 5000),
   };
