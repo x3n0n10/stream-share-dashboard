@@ -12,6 +12,15 @@ async function get(path, params = {}) {
   return res.json();
 }
 
+async function post(path) {
+  const res = await fetch(path, { method: "POST" });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(body.error || `Request to ${path} failed: HTTP ${res.status}`);
+  }
+  return body;
+}
+
 export const api = {
   config: () => get("/api/config"),
   overview: (hours) => get("/api/overview", { hours }),
@@ -21,4 +30,7 @@ export const api = {
   streams: () => get("/api/streams"),
   userHistory: (instanceId, username, hours) =>
     get(`/api/instances/${instanceId}/users/${encodeURIComponent(username)}/history`, { hours }),
+  gluetunStatus: () => get("/api/gluetun"),
+  gluetunStart: () => post("/api/gluetun/start"),
+  gluetunStop: () => post("/api/gluetun/stop"),
 };

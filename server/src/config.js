@@ -36,6 +36,24 @@ function readInstances(env) {
   return instances;
 }
 
+// Gluetun's control server API. GLUETUN_URL is the only required var — leave
+// it unset to disable the VPN page entirely. GLUETUN_STATUS_PATH exists as an
+// escape hatch: the status/start/stop endpoint has moved across gluetun
+// versions (/v1/openvpn/status historically, also used for WireGuard; some
+// newer releases expose /v1/vpn/status instead) — override it if the default
+// doesn't match your gluetun version.
+function readGluetun(env) {
+  const url = (env.GLUETUN_URL || "").replace(/\/+$/, "");
+  if (!url) return null;
+
+  return {
+    url,
+    apiKey: env.GLUETUN_API_KEY || "",
+    statusPath: env.GLUETUN_STATUS_PATH || "/v1/openvpn/status",
+    timeoutMs: Math.max(1000, Number(env.GLUETUN_TIMEOUT_MS) || 5000),
+  };
+}
+
 export function loadConfig(env = process.env) {
   const instances = readInstances(env);
 
@@ -49,5 +67,6 @@ export function loadConfig(env = process.env) {
         ? { user: env.DASHBOARD_USER, password: env.DASHBOARD_PASSWORD }
         : null,
     instances,
+    gluetun: readGluetun(env),
   };
 }

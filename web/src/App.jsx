@@ -6,6 +6,7 @@ import History from "./pages/History.jsx";
 import Leaderboard from "./pages/Leaderboard.jsx";
 import Users from "./pages/Users.jsx";
 import Instances from "./pages/Instances.jsx";
+import Vpn from "./pages/Vpn.jsx";
 import { api } from "./lib/api.js";
 
 export default function App() {
@@ -31,6 +32,7 @@ export default function App() {
       <Route path="/leaderboard" element={<Leaderboard pollIntervalMs={pollIntervalMs} />} />
       <Route path="/users" element={<Users pollIntervalMs={pollIntervalMs} />} />
       <Route path="/instances" element={<Instances pollIntervalMs={pollIntervalMs} />} />
+      <Route path="/vpn" element={<Vpn pollIntervalMs={pollIntervalMs} />} />
     </Routes>
   );
 }

@@ -38,3 +38,11 @@ services:
       # INSTANCE_2_NAME: "Backup"
       # INSTANCE_2_URL: "http://stream-share-backup:8080"
       # INSTANCE_2_API_KEY: ""
+
+      # --- Optional: gluetun VPN control (adds a "VPN" page) ---
+      # Leave GLUETUN_URL blank to hide the page entirely. Point it at your
+      # gluetun service's control server (default port 8000); if it's on the
+      # same docker-compose network you can use the service name as host.
+      GLUETUN_URL: ""                  # e.g. "http://gluetun:8000"
+      GLUETUN_API_KEY: ""              # only if your control server requires one
+      # GLUETUN_STATUS_PATH: "/v1/openvpn/status"  # override if your gluetun version uses /v1/vpn/status instead

@@ -109,9 +109,41 @@ echo "$GITHUB_TOKEN" | docker login ghcr.io -u <your-github-username> --password
 - **Users** — every known user session across instances, watching or idle.
 - **Instances** — per-instance health, uptime, and enabled features
   (Discord, VOD cache, catchup).
+- **VPN** — optional; shows [gluetun](https://github.com/qdm12/gluetun)'s
+  connection status and exit IP/location, with Start/Stop buttons. Only
+  appears once configured (see below); otherwise shows how to enable it.
 
 All pages auto-refresh (`POLL_INTERVAL_MS`, default 15s) and work down to
 phone-sized screens.
+
+## Gluetun VPN control (optional)
+
+If your stack routes stream-share's outbound connection through
+[gluetun](https://github.com/qdm12/gluetun), point the dashboard at its
+control server to get a VPN page with live status, exit IP, and Start/Stop
+buttons:
+
+```yaml
+GLUETUN_URL: "http://gluetun:8000"   # gluetun's control server, same network
+GLUETUN_API_KEY: ""                  # only if your control server requires one
+# GLUETUN_STATUS_PATH: "/v1/openvpn/status"  # override if needed, see below
+```
+
+Leave `GLUETUN_URL` blank to hide the page entirely.
+
+This talks to gluetun's [control server
+API](https://github.com/qdm12/gluetun-wiki/blob/main/setup/advanced/control-server.md).
+`/v1/openvpn/status` is the long-documented status/start/stop endpoint — it's
+also what's used for WireGuard connections despite the name. If your gluetun
+version has moved this (e.g. to `/v1/vpn/status`), override it with
+`GLUETUN_STATUS_PATH`. The VPN page has a "Show raw gluetun response" toggle
+so you can immediately see the actual JSON shape your gluetun version
+returns if something looks off.
+
+**Stopping the VPN is a real action**, not just a UI toggle — it calls
+gluetun's control server directly and will interrupt or expose whatever
+traffic is routed through it. The dashboard confirms before stopping, but
+there's no undo beyond hitting Start again.
 
 ## Development
 

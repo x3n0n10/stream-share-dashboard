@@ -7,6 +7,7 @@ import {
   fetchStreams,
   fetchUserHistory,
 } from "./instanceClient.js";
+import { getVpnStatus, setVpnStatus, getPublicIP } from "./gluetunClient.js";
 
 function findInstance(config, id) {
   return config.instances.find((i) => i.id === id);
@@ -34,6 +35,7 @@ export function createRouter(config) {
       title: config.title,
       pollIntervalMs: config.pollIntervalMs,
       instances: config.instances.map(({ id, name, url }) => ({ id, name, url })),
+      gluetun: { enabled: !!config.gluetun },
     });
   });
 
@@ -196,6 +198,42 @@ export function createRouter(config) {
         offset,
       });
       res.json(data);
+    } catch (err) {
+      res.status(err.status && err.status < 500 ? err.status : 502).json({ error: err.message });
+    }
+  });
+
+  // Gluetun VPN status + exit IP. { enabled: false } when GLUETUN_URL isn't set.
+  router.get("/gluetun", async (req, res) => {
+    if (!config.gluetun) {
+      return res.json({ enabled: false });
+    }
+
+    const [vpn, ip] = await Promise.allSettled([
+      getVpnStatus(config.gluetun),
+      getPublicIP(config.gluetun),
+    ]);
+
+    res.json({
+      enabled: true,
+      // vpn.status is gluetun's raw response, typically {"status": "running"|"stopped"}
+      vpn: vpn.status === "fulfilled" ? vpn.value : null,
+      vpnError: vpn.status === "rejected" ? vpn.reason.message : null,
+      publicIp: ip.status === "fulfilled" ? ip.value : null,
+      publicIpError: ip.status === "rejected" ? ip.reason.message : null,
+    });
+  });
+
+  // Starts/stops the VPN connection via gluetun's control server.
+  router.post("/gluetun/:action(start|stop)", async (req, res) => {
+    if (!config.gluetun) {
+      return res.status(404).json({ error: "Gluetun is not configured (set GLUETUN_URL)" });
+    }
+
+    const desired = req.params.action === "start" ? "running" : "stopped";
+    try {
+      const status = await setVpnStatus(config.gluetun, desired);
+      res.json(status);
     } catch (err) {
       res.status(err.status && err.status < 500 ? err.status : 502).json({ error: err.message });
     }
