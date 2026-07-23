@@ -124,7 +124,11 @@ echo "$GITHUB_TOKEN" | docker login ghcr.io -u <your-github-username> --password
   File size is left blank until you click "Get size" (it's a live upstream
   probe per title, done on demand rather than for every result). Download
   creates a temporary link on the instance that owns the content and opens
-  it directly — the dashboard itself never proxies the file.
+  it directly — the dashboard itself never proxies the file. Search itself
+  is a live call to each instance's upstream Xtream provider (not the fast,
+  in-memory endpoints the rest of the dashboard uses) and can take well over
+  `INSTANCE_TIMEOUT_MS` on a slow provider or a large series catalog, so it
+  has its own, longer budget: `VOD_SEARCH_TIMEOUT_MS` (default 30s).
 
 All pages except VOD Search auto-refresh (`POLL_INTERVAL_MS`, default 15s)
 and work down to phone-sized screens.

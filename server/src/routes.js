@@ -240,16 +240,19 @@ export function createRouter(config) {
     }
   });
 
-  // VOD search across every instance. Fast — no file sizes probed here, only
-  // whatever an instance already had cached. Requires that instance's Xtream
-  // config to be set; instances proxying a plain M3U will error per-item below.
+  // VOD search across every instance. No file sizes probed here (only
+  // whatever an instance already had cached) — but the search itself still
+  // hits the instance's upstream Xtream provider live, which can take well
+  // longer than INSTANCE_TIMEOUT_MS, hence the separate vodSearchTimeoutMs.
+  // Requires that instance's Xtream config to be set; instances proxying a
+  // plain M3U will error per-item below.
   router.get("/vod/search", async (req, res) => {
     const query = (req.query.q || "").toString().trim();
     if (!query) return res.json({ query: "", results: [], errors: [] });
 
     const results = await Promise.allSettled(
       config.instances.map((instance) =>
-        searchVOD(instance, query, { ...opts, username: config.vodActorUsername })
+        searchVOD(instance, query, { timeoutMs: config.vodSearchTimeoutMs, username: config.vodActorUsername })
       )
     );
 

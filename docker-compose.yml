@@ -19,6 +19,11 @@ services:
       POLL_INTERVAL_MS: "15000"
       INSTANCE_TIMEOUT_MS: "6000"
 
+      # VOD search hits each instance's upstream Xtream provider live (not
+      # in-memory like the other endpoints), so it gets its own, longer
+      # timeout — bump this if searches on a slow provider still time out.
+      VOD_SEARCH_TIMEOUT_MS: "30000"
+
       # Identity sent as "username" on VOD search/download requests (stream-share
       # uses it for per-user timeout checks and to block downloads while that
       # "user" is live-streaming — neither applies here). Only change this if it
