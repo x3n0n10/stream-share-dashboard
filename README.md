@@ -102,7 +102,11 @@ echo "$GITHUB_TOKEN" | docker login ghcr.io -u <your-github-username> --password
 - **Overview** — global totals plus a live status card per instance and a
   "now playing" table merged across all of them.
 - **Live Now** — every currently active stream, with viewers, grouped across
-  instances.
+  instances. Both this and Overview's "now playing" table show a compact
+  technical summary (video codec/resolution/fps, audio track languages,
+  subtitle languages) under the title whenever the instance reports it —
+  requires a stream-share version that probes and returns stream tech info;
+  older instances simply show nothing extra.
 - **History** — a merged, searchable, chronological watch-history feed.
 - **Leaderboard** — top titles and top viewers, summed across instances for
   the selected time window.

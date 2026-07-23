@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Layout from "../components/Layout.jsx";
 import HoursSelect from "../components/HoursSelect.jsx";
-import { Card, StatTile, Badge, StatusDot, EmptyState, ErrorNote, Skeleton } from "../components/common.jsx";
+import { Card, StatTile, Badge, StatusDot, EmptyState, ErrorNote, Skeleton, TechSummary } from "../components/common.jsx";
 import { IconOverview, IconPlay, IconUsers, IconHistory, IconRefresh } from "../components/Icons.jsx";
 import { api } from "../lib/api.js";
 import { usePolling } from "../lib/usePolling.js";
@@ -135,8 +135,11 @@ export default function Overview({ pollIntervalMs }) {
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                       {nowPlaying.map((s, idx) => (
                         <tr key={`${s.instanceId}-${s.stream_id}-${idx}`}>
-                          <td className="max-w-[16rem] truncate px-4 py-2.5 font-medium text-slate-800 dark:text-slate-100">
-                            {s.stream_title || s.stream_id}
+                          <td className="max-w-[16rem] px-4 py-2.5">
+                            <p className="truncate font-medium text-slate-800 dark:text-slate-100">
+                              {s.stream_title || s.stream_id}
+                            </p>
+                            <TechSummary tech={s.tech} className="truncate" />
                           </td>
                           <td className="px-4 py-2.5 text-slate-500 dark:text-slate-400">{s.instanceName}</td>
                           <td className="px-4 py-2.5">
