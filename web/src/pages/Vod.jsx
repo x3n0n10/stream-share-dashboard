@@ -1,12 +1,108 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Layout from "../components/Layout.jsx";
 import { Card, Badge, EmptyState, ErrorNote, Button } from "../components/common.jsx";
-import { IconSearch, IconDownload } from "../components/Icons.jsx";
+import { IconSearch, IconDownload, IconCopy, IconCheck, IconChevronDown } from "../components/Icons.jsx";
 import { api } from "../lib/api.js";
 import { titleCase } from "../lib/format.js";
 
 function resultKey(r) {
   return `${r.instance_id}::${r.StreamType}::${r.StreamID}`;
+}
+
+// navigator.clipboard requires a secure context (https, or localhost) — this
+// dashboard is routinely run over plain http on a LAN, so fall back to the
+// legacy execCommand trick rather than silently failing there.
+async function copyToClipboard(text) {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch {
+      // fall through to legacy fallback below
+    }
+  }
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try {
+    document.execCommand("copy");
+  } finally {
+    document.body.removeChild(ta);
+  }
+}
+
+// Groups the flat result list into movies (unchanged) and series, where every
+// episode of the same series on the same instance collapses into one item
+// that expands to reveal its episodes — stream-share's search returns one
+// VODResult per episode, there's no series-level entry to key off of.
+function groupResults(results) {
+  const items = [];
+  const seriesByKey = new Map();
+
+  for (const r of results) {
+    if (r.StreamType !== "series") {
+      items.push({ kind: "movie", key: resultKey(r), result: r });
+      continue;
+    }
+    const seriesTitle = r.SeriesTitle || r.Title;
+    const groupKey = `${r.instance_id}::series::${seriesTitle}`;
+    let group = seriesByKey.get(groupKey);
+    if (!group) {
+      group = {
+        kind: "series",
+        key: groupKey,
+        seriesTitle,
+        category: r.Category,
+        year: r.Year,
+        instance_id: r.instance_id,
+        instance_name: r.instance_name,
+        episodes: [],
+      };
+      seriesByKey.set(groupKey, group);
+      items.push(group);
+    }
+    group.episodes.push(r);
+  }
+
+  for (const item of items) {
+    if (item.kind === "series") {
+      item.episodes.sort((a, b) => (a.Season || 0) - (b.Season || 0) || (a.Episode || 0) - (b.Episode || 0));
+    }
+  }
+
+  return items;
+}
+
+// Size / Download / Copy URL controls shared between movie cards and
+// episode rows within an expanded series.
+function VodActions({ result, state, onGetSize, onDownload, onCopy }) {
+  return (
+    <div className="flex items-center gap-2">
+      {result.Size ? (
+        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{result.Size}</span>
+      ) : (
+        <button
+          onClick={() => onGetSize(result)}
+          disabled={state.sizing}
+          className="text-xs font-medium text-accent-600 hover:underline disabled:opacity-50 dark:text-accent-400"
+        >
+          {state.sizing ? "Checking size…" : "Get size"}
+        </button>
+      )}
+      <Button tone="ghost" loading={state.copying} onClick={() => onCopy(result)}>
+        {state.copied ? <IconCheck className="h-3.5 w-3.5" /> : <IconCopy className="h-3.5 w-3.5" />}
+        {state.copied ? "Copied" : "Copy URL"}
+      </Button>
+      <Button tone="ghost" loading={state.downloading} onClick={() => onDownload(result)}>
+        <IconDownload className="h-3.5 w-3.5" />
+        Download
+      </Button>
+    </div>
+  );
 }
 
 export default function Vod() {
@@ -16,7 +112,10 @@ export default function Vod() {
   const [results, setResults] = useState([]);
   const [errors, setErrors] = useState([]);
   const [searchError, setSearchError] = useState(null);
-  const [rowState, setRowState] = useState({}); // key -> { sizing, downloading, error }
+  const [rowState, setRowState] = useState({}); // key -> { sizing, downloading, copying, copied, error }
+  const [expanded, setExpanded] = useState({}); // series group key -> bool
+
+  const items = useMemo(() => groupResults(results), [results]);
 
   async function runSearch(e) {
     e?.preventDefault();
@@ -26,6 +125,7 @@ export default function Vod() {
     setLoading(true);
     setSearchError(null);
     setRowState({});
+    setExpanded({});
     try {
       const data = await api.vodSearch(q);
       setResults(data.results || []);
@@ -70,6 +170,25 @@ export default function Vod() {
     }
   }
 
+  async function copyUrl(result) {
+    const key = resultKey(result);
+    patchRow(key, { copying: true, error: null });
+    try {
+      const data = await api.vodDownload(result.instance_id, result.StreamID, result.Title, result.StreamType);
+      await copyToClipboard(data.download_url);
+      patchRow(key, { copied: true });
+      setTimeout(() => patchRow(key, { copied: false }), 2000);
+    } catch (err) {
+      patchRow(key, { error: err.message });
+    } finally {
+      patchRow(key, { copying: false });
+    }
+  }
+
+  function toggleExpanded(key) {
+    setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
   return (
     <Layout title="VOD Search">
       <form onSubmit={runSearch} className="flex gap-2">
@@ -108,50 +227,94 @@ export default function Vod() {
           />
         ) : loading ? (
           <EmptyState title="Searching…" />
-        ) : results.length === 0 ? (
+        ) : items.length === 0 ? (
           <EmptyState title={`No results for "${submittedQuery}"`} subtitle="Try a different title or spelling." />
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {results.map((r) => {
-              const key = resultKey(r);
-              const state = rowState[key] || {};
-              return (
-                <Card key={key} className="flex flex-col p-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-medium leading-snug text-slate-900 dark:text-white">{r.Title}</p>
-                    <Badge tone={r.StreamType === "series" ? "accent" : "slate"}>{titleCase(r.StreamType)}</Badge>
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
-                    {r.Category && <span>{r.Category}</span>}
-                    {r.Year && <span>{r.Year}</span>}
-                    {r.Rating && <span>★ {r.Rating}</span>}
-                    {r.Duration && <span>{r.Duration}</span>}
-                  </div>
-                  <p className="mt-1 text-xs text-slate-400">{r.instance_name}</p>
+            {items.map((item) => {
+              if (item.kind === "movie") {
+                const r = item.result;
+                const state = rowState[item.key] || {};
+                return (
+                  <Card key={item.key} className="flex flex-col p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm font-medium leading-snug text-slate-900 dark:text-white">{r.Title}</p>
+                      <Badge tone="slate">{titleCase(r.StreamType)}</Badge>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+                      {r.Category && <span>{r.Category}</span>}
+                      {r.Year && <span>{r.Year}</span>}
+                      {r.Rating && <span>★ {r.Rating}</span>}
+                      {r.Duration && <span>{r.Duration}</span>}
+                    </div>
+                    <p className="mt-1 text-xs text-slate-400">{r.instance_name}</p>
 
-                  {state.error && (
-                    <div className="mt-2">
-                      <ErrorNote message={state.error} />
+                    {state.error && (
+                      <div className="mt-2">
+                        <ErrorNote message={state.error} />
+                      </div>
+                    )}
+
+                    <div className="mt-3 flex items-center justify-between gap-2">
+                      <VodActions result={r} state={state} onGetSize={getSize} onDownload={download} onCopy={copyUrl} />
+                    </div>
+                  </Card>
+                );
+              }
+
+              const isOpen = !!expanded[item.key];
+              return (
+                <Card key={item.key} className="flex flex-col p-4">
+                  <button
+                    onClick={() => toggleExpanded(item.key)}
+                    className="flex items-start justify-between gap-2 text-left"
+                  >
+                    <p className="text-sm font-medium leading-snug text-slate-900 dark:text-white">
+                      {item.seriesTitle}
+                    </p>
+                    <Badge tone="accent">Series</Badge>
+                  </button>
+                  <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+                    {item.category && <span>{item.category}</span>}
+                    {item.year && <span>{item.year}</span>}
+                    <span>
+                      {item.episodes.length} episode{item.episodes.length === 1 ? "" : "s"}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-slate-400">{item.instance_name}</p>
+
+                  <button
+                    onClick={() => toggleExpanded(item.key)}
+                    className="mt-3 flex items-center gap-1 text-xs font-medium text-accent-600 hover:underline dark:text-accent-400"
+                  >
+                    <IconChevronDown className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                    {isOpen ? "Hide episodes" : "Show episodes"}
+                  </button>
+
+                  {isOpen && (
+                    <div className="mt-3 -mx-4 max-h-80 divide-y divide-slate-100 overflow-y-auto border-t border-slate-100 px-4 dark:divide-slate-800 dark:border-slate-800">
+                      {item.episodes.map((ep) => {
+                        const epKey = resultKey(ep);
+                        const state = rowState[epKey] || {};
+                        return (
+                          <div key={epKey} className="py-2.5">
+                            <p className="text-xs font-medium text-slate-700 dark:text-slate-200">
+                              S{String(ep.Season || 0).padStart(2, "0")}E{String(ep.Episode || 0).padStart(2, "0")}
+                              {ep.EpisodeTitle ? ` — ${ep.EpisodeTitle}` : ""}
+                            </p>
+                            {state.error && (
+                              <div className="mt-1">
+                                <ErrorNote message={state.error} />
+                              </div>
+                            )}
+                            <div className="mt-1.5">
+                              <VodActions result={ep} state={state} onGetSize={getSize} onDownload={download} onCopy={copyUrl} />
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
-
-                  <div className="mt-3 flex items-center justify-between gap-2">
-                    {r.Size ? (
-                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{r.Size}</span>
-                    ) : (
-                      <button
-                        onClick={() => getSize(r)}
-                        disabled={state.sizing}
-                        className="text-xs font-medium text-accent-600 hover:underline disabled:opacity-50 dark:text-accent-400"
-                      >
-                        {state.sizing ? "Checking size…" : "Get size"}
-                      </button>
-                    )}
-                    <Button tone="ghost" loading={state.downloading} onClick={() => download(r)}>
-                      <IconDownload className="h-3.5 w-3.5" />
-                      Download
-                    </Button>
-                  </div>
                 </Card>
               );
             })}
