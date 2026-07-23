@@ -147,6 +147,13 @@ export default function Vod() {
     patchRow(key, { sizing: true, error: null });
     try {
       const enriched = await api.vodSize(result.instance_id, result);
+      if (!enriched.Size) {
+        // The instance's probe completed but found nothing (e.g. it guessed
+        // the wrong file extension for this title and got a 404) — surface
+        // that instead of silently reverting to "Get size" with no feedback.
+        patchRow(key, { error: "Instance couldn't determine a size for this title." });
+        return;
+      }
       setResults((prev) =>
         prev.map((r) => (resultKey(r) === key ? { ...r, SizeBytes: enriched.SizeBytes, Size: enriched.Size } : r))
       );
