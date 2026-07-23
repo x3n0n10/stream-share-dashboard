@@ -138,3 +138,21 @@ export function IconGlobe({ className }) {
     </svg>
   );
 }
+
+export function IconSearch({ className }) {
+  return (
+    <svg className={className} {...base}>
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <path d="M20 20l-4.8-4.8" />
+    </svg>
+  );
+}
+
+export function IconDownload({ className }) {
+  return (
+    <svg className={className} {...base}>
+      <path d="M12 3v12M7 10l5 5 5-5" />
+      <path d="M4 19.5h16" />
+    </svg>
+  );
+}

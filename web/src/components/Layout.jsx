@@ -8,6 +8,7 @@ import {
   IconUsers,
   IconServer,
   IconShield,
+  IconSearch,
   IconSun,
   IconMoon,
   IconMenu,
@@ -23,6 +24,7 @@ const NAV_ITEMS = [
   { to: "/users", label: "Users", icon: IconUsers },
   { to: "/instances", label: "Instances", icon: IconServer },
   { to: "/vpn", label: "VPN", icon: IconShield },
+  { to: "/vod", label: "VOD Search", icon: IconSearch },
 ];
 
 function NavList({ onNavigate }) {

@@ -32,7 +32,7 @@ if (config.basicAuth) {
   });
 }
 
-app.use("/api", createRouter(config));
+app.use("/api", express.json(), createRouter(config));
 
 const staticDir = path.join(__dirname, "..", "public");
 app.use(express.static(staticDir));

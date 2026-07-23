@@ -9,7 +9,7 @@ class InstanceError extends Error {
   }
 }
 
-async function callInstance(instance, path, { timeoutMs, query } = {}) {
+async function callInstance(instance, path, { timeoutMs, query, method, body } = {}) {
   const url = new URL(`${instance.url}/api/internal${path}`);
   if (query) {
     for (const [key, value] of Object.entries(query)) {
@@ -24,22 +24,27 @@ async function callInstance(instance, path, { timeoutMs, query } = {}) {
 
   try {
     const res = await fetch(url, {
-      headers: { "X-API-Key": instance.apiKey },
+      method: method || "GET",
+      headers: {
+        "X-API-Key": instance.apiKey,
+        ...(body ? { "Content-Type": "application/json" } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
       signal: controller.signal,
     });
 
-    let body;
+    let responseBody;
     try {
-      body = await res.json();
+      responseBody = await res.json();
     } catch {
       throw new InstanceError(`Non-JSON response (HTTP ${res.status})`, res.status);
     }
 
-    if (!res.ok || body.success === false) {
-      throw new InstanceError(body.error || `HTTP ${res.status}`, res.status);
+    if (!res.ok || responseBody.success === false) {
+      throw new InstanceError(responseBody.error || `HTTP ${res.status}`, res.status);
     }
 
-    return body.data;
+    return responseBody.data;
   } catch (err) {
     if (err.name === "AbortError") {
       throw new InstanceError(`Timed out after ${timeoutMs}ms`, 504);
@@ -95,6 +100,35 @@ export async function fetchUserHistory(instance, username, { timeoutMs, hours, l
   return callInstance(instance, `/history/${encodeURIComponent(username)}`, {
     timeoutMs,
     query: { hours, limit, offset },
+  });
+}
+
+// Search is fast and never includes file sizes — stream-share only prefills
+// sizes it already has cached, keeping the request cheap across instances.
+export async function searchVOD(instance, query, { timeoutMs, username }) {
+  return callInstance(instance, "/vod/search", {
+    timeoutMs,
+    method: "POST",
+    body: { username, query },
+  });
+}
+
+// Enriching is a live upstream probe (HEAD/range request) per item, so it's
+// only ever called for one result at a time, on demand from the UI.
+export async function enrichVODResult(instance, result, { timeoutMs }) {
+  const data = await callInstance(instance, "/vod/enrich", {
+    timeoutMs,
+    method: "POST",
+    body: { query: "", results: [result], page: 0, per_page: 1 },
+  });
+  return data.results?.[0] || result;
+}
+
+export async function createVODDownload(instance, { username, streamId, title, type }, { timeoutMs }) {
+  return callInstance(instance, "/vod/download", {
+    timeoutMs,
+    method: "POST",
+    body: { username, stream_id: streamId, title, type },
   });
 }
 

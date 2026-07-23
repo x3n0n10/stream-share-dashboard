@@ -112,9 +112,16 @@ echo "$GITHUB_TOKEN" | docker login ghcr.io -u <your-github-username> --password
 - **VPN** — optional; shows [gluetun](https://github.com/qdm12/gluetun)'s
   connection status and exit IP/location, with Start/Stop buttons. Only
   appears once configured (see below); otherwise shows how to enable it.
+- **VOD Search** — search movies and series across every instance at once.
+  Requires that instance's Xtream provider to be configured; instances
+  proxying a plain M3U will show a per-instance error instead of results.
+  File size is left blank until you click "Get size" (it's a live upstream
+  probe per title, done on demand rather than for every result). Download
+  creates a temporary link on the instance that owns the content and opens
+  it directly — the dashboard itself never proxies the file.
 
-All pages auto-refresh (`POLL_INTERVAL_MS`, default 15s) and work down to
-phone-sized screens.
+All pages except VOD Search auto-refresh (`POLL_INTERVAL_MS`, default 15s)
+and work down to phone-sized screens.
 
 ## Gluetun VPN control (optional)
 

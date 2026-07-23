@@ -19,6 +19,12 @@ services:
       POLL_INTERVAL_MS: "15000"
       INSTANCE_TIMEOUT_MS: "6000"
 
+      # Identity sent as "username" on VOD search/download requests (stream-share
+      # uses it for per-user timeout checks and to block downloads while that
+      # "user" is live-streaming — neither applies here). Only change this if it
+      # happens to collide with one of your real usernames.
+      VOD_ACTOR_USERNAME: "dashboard"
+
       # Optional: put the whole dashboard behind HTTP basic auth (it shows
       # viewer usernames/IPs pulled from every instance below). Leave both
       # blank to disable.

@@ -76,5 +76,10 @@ export function loadConfig(env = process.env) {
         : null,
     instances,
     gluetun: readGluetun(env),
+    // Identity sent as "username" on VOD search/download calls — stream-share
+    // uses it for per-user timeout checks and to block downloads while that
+    // "user" is live-streaming, neither of which apply to dashboard-initiated
+    // requests. Change it only if it happens to collide with a real username.
+    vodActorUsername: env.VOD_ACTOR_USERNAME || "dashboard",
   };
 }
