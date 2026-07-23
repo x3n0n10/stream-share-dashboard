@@ -4,7 +4,7 @@ services:
     # To test a specific commit without building locally, replace the line
     # above with a published image instead — see docker-compose.dev.yml for
     # a ready-made override, or just use one of these tags directly:
-    #   image: ghcr.io/x3n0n10/stream-share-dashboard:dev            # latest on main
+    #   image: ghcr.io/x3n0n10/stream-share-dashboard:dev            # latest pushed (any branch)
     #   image: ghcr.io/x3n0n10/stream-share-dashboard:dev-<shortsha> # one specific commit
     container_name: stream-share-dashboard
     restart: unless-stopped

@@ -72,7 +72,9 @@ your side:
 - `ghcr.io/x3n0n10/stream-share-dashboard:dev-<short-sha>` — one specific
   commit, always available, never moves.
 - `ghcr.io/x3n0n10/stream-share-dashboard:dev` — floating tag that always
-  points at the latest commit on `main`.
+  points at whichever push landed most recently, on any branch. If you're
+  working on more than one branch at a time, pin `:dev-<short-sha>` instead
+  so you know exactly which commit you're running.
 
 To run one of these instead of building locally, use the provided override:
 

@@ -4,8 +4,12 @@ name: Dev Image
 # always be pulled by its short SHA — no need to wait for a merge or a
 # release to try out a change:
 #
-#   ghcr.io/x3n0n10/stream-share-dashboard:dev-<short-sha>   (every push)
-#   ghcr.io/x3n0n10/stream-share-dashboard:dev               (main only, "latest dev")
+#   ghcr.io/x3n0n10/stream-share-dashboard:dev-<short-sha>   (every push, any branch)
+#   ghcr.io/x3n0n10/stream-share-dashboard:dev               (every push, any branch — "latest pushed")
+#
+# :dev always points at whichever push landed most recently, regardless of
+# branch — if you're juggling multiple branches at once, pin :dev-<short-sha>
+# instead so you know exactly which commit you're running.
 #
 # Uses the repo's built-in GITHUB_TOKEN — no secrets to configure.
 
@@ -48,8 +52,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Move floating :dev tag (main only)
-        if: github.ref == 'refs/heads/main'
+      - name: Move floating :dev tag
         run: |
           docker buildx imagetools create \
             -t ghcr.io/${{ github.repository }}:dev \
