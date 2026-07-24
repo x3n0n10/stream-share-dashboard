@@ -38,7 +38,6 @@ export const api = {
   gluetunStart: () => post("/api/gluetun/start"),
   gluetunStop: () => post("/api/gluetun/stop"),
   vodSearch: (q) => get("/api/vod/search", { q }),
-  vodSize: (instanceId, result) => post(`/api/instances/${instanceId}/vod/size`, { result }),
   vodDownload: (instanceId, streamId, title, type) =>
     post(`/api/instances/${instanceId}/vod/download`, { streamId, title, type }),
 };

@@ -123,14 +123,13 @@ echo "$GITHUB_TOKEN" | docker login ghcr.io -u <your-github-username> --password
   proxying a plain M3U will show a per-instance error instead of results.
   Series results are grouped into one card per series (per instance) that
   expands to list its episodes — stream-share's search returns one result
-  per episode, so the dashboard consolidates them client-side. File size is
-  left blank until you click "Get size" (it's a live upstream probe per
-  title, done on demand rather than for every result). "Copy URL" copies the
-  temporary download link to the clipboard instead of opening it; both that
-  and "Download" create a fresh link each time on the instance that owns the
-  content — the dashboard itself never proxies the file. Search itself is a
-  live call to each instance's upstream Xtream provider (not the fast,
-  in-memory endpoints the rest of the dashboard uses) and can take well over
+  per episode, so the dashboard consolidates them client-side. "Copy URL"
+  copies the temporary download link to the clipboard instead of opening it;
+  both that and "Download" create a fresh link each time on the instance
+  that owns the content — the dashboard itself never proxies the file.
+  Search itself is a live call to each instance's upstream Xtream provider
+  (not the fast, in-memory endpoints the rest of the dashboard uses) and can
+  take well over
   `INSTANCE_TIMEOUT_MS` on a slow provider or a large series catalog, so it
   has its own, longer budget: `VOD_SEARCH_TIMEOUT_MS` (default 30s).
 

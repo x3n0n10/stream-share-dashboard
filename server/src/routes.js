@@ -8,7 +8,7 @@ import {
   fetchUserHistory,
 } from "./instanceClient.js";
 import { getVpnStatus, setVpnStatus, getPublicIP } from "./gluetunClient.js";
-import { searchVOD, enrichVODResult, createVODDownload } from "./instanceClient.js";
+import { searchVOD, createVODDownload } from "./instanceClient.js";
 
 function findInstance(config, id) {
   return config.instances.find((i) => i.id === id);
@@ -272,20 +272,6 @@ export function createRouter(config) {
     merged.sort((a, b) => (a.Title || "").localeCompare(b.Title || ""));
 
     res.json({ query, results: merged, errors });
-  });
-
-  // On-demand file size for a single result — a live upstream probe on the
-  // instance's side, so it's never done in bulk from the search endpoint.
-  router.post("/instances/:id/vod/size", async (req, res) => {
-    const instance = findInstance(config, req.params.id);
-    if (!instance) return res.status(404).json({ error: "Unknown instance" });
-
-    try {
-      const enriched = await enrichVODResult(instance, req.body.result, opts);
-      res.json(enriched);
-    } catch (err) {
-      res.status(err.status && err.status < 500 ? err.status : 502).json({ error: err.message });
-    }
   });
 
   // Creates a temporary download link on the owning instance. The returned

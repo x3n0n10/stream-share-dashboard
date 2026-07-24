@@ -77,22 +77,11 @@ function groupResults(results) {
   return items;
 }
 
-// Size / Download / Copy URL controls shared between movie cards and
-// episode rows within an expanded series.
-function VodActions({ result, state, onGetSize, onDownload, onCopy }) {
+// Download / Copy URL controls shared between movie cards and episode rows
+// within an expanded series.
+function VodActions({ result, state, onDownload, onCopy }) {
   return (
     <div className="flex items-center gap-2">
-      {result.Size ? (
-        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{result.Size}</span>
-      ) : (
-        <button
-          onClick={() => onGetSize(result)}
-          disabled={state.sizing}
-          className="text-xs font-medium text-accent-600 hover:underline disabled:opacity-50 dark:text-accent-400"
-        >
-          {state.sizing ? "Checking size…" : "Get size"}
-        </button>
-      )}
       <Button tone="ghost" loading={state.copying} onClick={() => onCopy(result)}>
         {state.copied ? <IconCheck className="h-3.5 w-3.5" /> : <IconCopy className="h-3.5 w-3.5" />}
         {state.copied ? "Copied" : "Copy URL"}
@@ -112,7 +101,7 @@ export default function Vod() {
   const [results, setResults] = useState([]);
   const [errors, setErrors] = useState([]);
   const [searchError, setSearchError] = useState(null);
-  const [rowState, setRowState] = useState({}); // key -> { sizing, downloading, copying, copied, error }
+  const [rowState, setRowState] = useState({}); // key -> { downloading, copying, copied, error }
   const [expanded, setExpanded] = useState({}); // series group key -> bool
 
   const items = useMemo(() => groupResults(results), [results]);
@@ -140,28 +129,6 @@ export default function Vod() {
 
   function patchRow(key, patch) {
     setRowState((prev) => ({ ...prev, [key]: { ...prev[key], ...patch } }));
-  }
-
-  async function getSize(result) {
-    const key = resultKey(result);
-    patchRow(key, { sizing: true, error: null });
-    try {
-      const enriched = await api.vodSize(result.instance_id, result);
-      if (!enriched.Size) {
-        // The instance's probe completed but found nothing (e.g. it guessed
-        // the wrong file extension for this title and got a 404) — surface
-        // that instead of silently reverting to "Get size" with no feedback.
-        patchRow(key, { error: "Instance couldn't determine a size for this title." });
-        return;
-      }
-      setResults((prev) =>
-        prev.map((r) => (resultKey(r) === key ? { ...r, SizeBytes: enriched.SizeBytes, Size: enriched.Size } : r))
-      );
-    } catch (err) {
-      patchRow(key, { error: err.message });
-    } finally {
-      patchRow(key, { sizing: false });
-    }
   }
 
   async function download(result) {
@@ -263,7 +230,7 @@ export default function Vod() {
                     )}
 
                     <div className="mt-3 flex items-center justify-between gap-2">
-                      <VodActions result={r} state={state} onGetSize={getSize} onDownload={download} onCopy={copyUrl} />
+                      <VodActions result={r} state={state} onDownload={download} onCopy={copyUrl} />
                     </div>
                   </Card>
                 );
@@ -315,7 +282,7 @@ export default function Vod() {
                               </div>
                             )}
                             <div className="mt-1.5">
-                              <VodActions result={ep} state={state} onGetSize={getSize} onDownload={download} onCopy={copyUrl} />
+                              <VodActions result={ep} state={state} onDownload={download} onCopy={copyUrl} />
                             </div>
                           </div>
                         );

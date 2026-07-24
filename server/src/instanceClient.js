@@ -113,17 +113,6 @@ export async function searchVOD(instance, query, { timeoutMs, username }) {
   });
 }
 
-// Enriching is a live upstream probe (HEAD/range request) per item, so it's
-// only ever called for one result at a time, on demand from the UI.
-export async function enrichVODResult(instance, result, { timeoutMs }) {
-  const data = await callInstance(instance, "/vod/enrich", {
-    timeoutMs,
-    method: "POST",
-    body: { query: "", results: [result], page: 0, per_page: 1 },
-  });
-  return data.results?.[0] || result;
-}
-
 export async function createVODDownload(instance, { username, streamId, title, type }, { timeoutMs }) {
   return callInstance(instance, "/vod/download", {
     timeoutMs,
