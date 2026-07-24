@@ -8,6 +8,7 @@ import {
   fetchUserHistory,
 } from "./instanceClient.js";
 import { getVpnStatus, setVpnStatus, getPublicIP } from "./gluetunClient.js";
+import { searchVOD, createVODDownload } from "./instanceClient.js";
 
 function findInstance(config, id) {
   return config.instances.find((i) => i.id === id);
@@ -234,6 +235,62 @@ export function createRouter(config) {
     try {
       const status = await setVpnStatus(config.gluetun, desired);
       res.json(status);
+    } catch (err) {
+      res.status(err.status && err.status < 500 ? err.status : 502).json({ error: err.message });
+    }
+  });
+
+  // VOD search across every instance. No file sizes probed here (only
+  // whatever an instance already had cached) — but the search itself still
+  // hits the instance's upstream Xtream provider live, which can take well
+  // longer than INSTANCE_TIMEOUT_MS, hence the separate vodSearchTimeoutMs.
+  // Requires that instance's Xtream config to be set; instances proxying a
+  // plain M3U will error per-item below.
+  router.get("/vod/search", async (req, res) => {
+    const query = (req.query.q || "").toString().trim();
+    if (!query) return res.json({ query: "", results: [], errors: [] });
+
+    const results = await Promise.allSettled(
+      config.instances.map((instance) =>
+        searchVOD(instance, query, { timeoutMs: config.vodSearchTimeoutMs, username: config.vodActorUsername })
+      )
+    );
+
+    const errors = [];
+    const merged = [];
+    config.instances.forEach((instance, idx) => {
+      const r = results[idx];
+      if (r.status === "fulfilled") {
+        for (const item of r.value.results || []) {
+          merged.push({ ...item, instance_id: instance.id, instance_name: instance.name });
+        }
+      } else {
+        errors.push({ instanceId: instance.id, instanceName: instance.name, error: r.reason.message });
+      }
+    });
+
+    merged.sort((a, b) => (a.Title || "").localeCompare(b.Title || ""));
+
+    res.json({ query, results: merged, errors });
+  });
+
+  // Creates a temporary download link on the owning instance. The returned
+  // download_url points directly at that instance (using its own configured
+  // public address) — the browser opens it directly, not through this backend.
+  router.post("/instances/:id/vod/download", async (req, res) => {
+    const instance = findInstance(config, req.params.id);
+    if (!instance) return res.status(404).json({ error: "Unknown instance" });
+
+    const { streamId, title, type } = req.body;
+    if (!streamId) return res.status(400).json({ error: "streamId is required" });
+
+    try {
+      const data = await createVODDownload(
+        instance,
+        { username: config.vodActorUsername, streamId, title, type },
+        opts
+      );
+      res.json(data);
     } catch (err) {
       res.status(err.status && err.status < 500 ? err.status : 502).json({ error: err.message });
     }

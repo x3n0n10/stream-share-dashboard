@@ -1,5 +1,5 @@
 import Layout from "../components/Layout.jsx";
-import { Card, Badge, EmptyState, ErrorNote, Skeleton } from "../components/common.jsx";
+import { Card, Badge, EmptyState, ErrorNote, Skeleton, TechSummary } from "../components/common.jsx";
 import { IconRefresh, IconUsers } from "../components/Icons.jsx";
 import { api } from "../lib/api.js";
 import { usePolling } from "../lib/usePolling.js";
@@ -61,6 +61,7 @@ export default function Live({ pollIntervalMs }) {
                 <span className="font-medium text-slate-600 dark:text-slate-300">{s.instanceName}</span>
                 {s.epg_channel_id && <span className="text-slate-400">· {s.epg_channel_id}</span>}
               </div>
+              <TechSummary tech={s.tech} className="mt-1.5" />
               <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
                 <IconUsers className="h-3.5 w-3.5" />
                 {s.viewer_count} viewer{s.viewer_count === 1 ? "" : "s"}

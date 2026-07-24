@@ -4,7 +4,7 @@ services:
     # To test a specific commit without building locally, replace the line
     # above with a published image instead — see docker-compose.dev.yml for
     # a ready-made override, or just use one of these tags directly:
-    #   image: ghcr.io/x3n0n10/stream-share-dashboard:dev            # latest on main
+    #   image: ghcr.io/x3n0n10/stream-share-dashboard:dev            # latest pushed (any branch)
     #   image: ghcr.io/x3n0n10/stream-share-dashboard:dev-<shortsha> # one specific commit
     container_name: stream-share-dashboard
     restart: unless-stopped
@@ -18,6 +18,17 @@ services:
       # backend waits for a single instance before giving up on it (ms).
       POLL_INTERVAL_MS: "15000"
       INSTANCE_TIMEOUT_MS: "6000"
+
+      # VOD search hits each instance's upstream Xtream provider live (not
+      # in-memory like the other endpoints), so it gets its own, longer
+      # timeout — bump this if searches on a slow provider still time out.
+      VOD_SEARCH_TIMEOUT_MS: "30000"
+
+      # Identity sent as "username" on VOD search/download requests (stream-share
+      # uses it for per-user timeout checks and to block downloads while that
+      # "user" is live-streaming — neither applies here). Only change this if it
+      # happens to collide with one of your real usernames.
+      VOD_ACTOR_USERNAME: "dashboard"
 
       # Optional: put the whole dashboard behind HTTP basic auth (it shows
       # viewer usernames/IPs pulled from every instance below). Leave both

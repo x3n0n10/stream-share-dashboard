@@ -73,6 +73,37 @@ export function StatusDot({ online }) {
   );
 }
 
+// Compact technical summary (video/audio/subtitle tracks) for an active
+// stream, mirroring stream-share's own formatTechSummary. Renders nothing
+// when there's no usable info (not probed yet, older stream-share without
+// this field, or the last probe failed) — always optional, never blocks.
+export function TechSummary({ tech, className = "" }) {
+  if (!tech || tech.error) return null;
+
+  const parts = [];
+  if (tech.video_codec) {
+    let v = tech.video_codec.toUpperCase();
+    if (tech.width && tech.height) v += ` ${tech.width}×${tech.height}`;
+    if (tech.frame_rate) v += ` @${Math.round(tech.frame_rate)}fps`;
+    if (tech.video_bitrate_kbps) v += ` ${tech.video_bitrate_kbps}kbps`;
+    parts.push(v);
+  }
+  if (tech.audio_tracks?.length) {
+    const audio = tech.audio_tracks
+      .map((a) => [a.codec?.toUpperCase(), a.channels ? `${a.channels}ch` : null, a.language].filter(Boolean).join(" "))
+      .filter(Boolean)
+      .join(", ");
+    if (audio) parts.push(`Audio: ${audio}`);
+  }
+  if (tech.subtitle_tracks?.length) {
+    const langs = tech.subtitle_tracks.map((s) => s.language).filter(Boolean);
+    parts.push(langs.length ? `Subs: ${langs.join(", ")}` : `Subs: ${tech.subtitle_tracks.length}`);
+  }
+
+  if (parts.length === 0) return null;
+  return <p className={`text-xs text-slate-400 dark:text-slate-500 ${className}`}>{parts.join(" · ")}</p>;
+}
+
 export function EmptyState({ title, subtitle }) {
   return (
     <div className="flex flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-slate-300 py-14 text-center dark:border-slate-700">

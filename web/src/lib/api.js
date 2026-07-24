@@ -12,8 +12,12 @@ async function get(path, params = {}) {
   return res.json();
 }
 
-async function post(path) {
-  const res = await fetch(path, { method: "POST" });
+async function post(path, payload) {
+  const res = await fetch(path, {
+    method: "POST",
+    headers: payload !== undefined ? { "Content-Type": "application/json" } : undefined,
+    body: payload !== undefined ? JSON.stringify(payload) : undefined,
+  });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
     throw new Error(body.error || `Request to ${path} failed: HTTP ${res.status}`);
@@ -33,4 +37,7 @@ export const api = {
   gluetunStatus: () => get("/api/gluetun"),
   gluetunStart: () => post("/api/gluetun/start"),
   gluetunStop: () => post("/api/gluetun/stop"),
+  vodSearch: (q) => get("/api/vod/search", { q }),
+  vodDownload: (instanceId, streamId, title, type) =>
+    post(`/api/instances/${instanceId}/vod/download`, { streamId, title, type }),
 };

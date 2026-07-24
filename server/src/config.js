@@ -70,11 +70,22 @@ export function loadConfig(env = process.env) {
     title: env.DASHBOARD_TITLE || "Stream Share Dashboard",
     pollIntervalMs: Math.max(5000, Number(env.POLL_INTERVAL_MS) || 15000),
     requestTimeoutMs: Math.max(1000, Number(env.INSTANCE_TIMEOUT_MS) || 6000),
+    // VOD search hits the instance's upstream Xtream provider live (movies +
+    // series, the latter doing a get_series_info round-trip per matching
+    // show) — it's routinely much slower than the other, in-memory-backed
+    // endpoints that share INSTANCE_TIMEOUT_MS, so it gets its own, longer
+    // budget instead of forcing everything else to wait as long too.
+    vodSearchTimeoutMs: Math.max(5000, Number(env.VOD_SEARCH_TIMEOUT_MS) || 30000),
     basicAuth:
       env.DASHBOARD_USER && env.DASHBOARD_PASSWORD
         ? { user: env.DASHBOARD_USER, password: env.DASHBOARD_PASSWORD }
         : null,
     instances,
     gluetun: readGluetun(env),
+    // Identity sent as "username" on VOD search/download calls — stream-share
+    // uses it for per-user timeout checks and to block downloads while that
+    // "user" is live-streaming, neither of which apply to dashboard-initiated
+    // requests. Change it only if it happens to collide with a real username.
+    vodActorUsername: env.VOD_ACTOR_USERNAME || "dashboard",
   };
 }

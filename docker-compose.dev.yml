@@ -1,11 +1,13 @@
 # Override that swaps the locally-built image for a published dev image, so
 # you can test a commit without building it yourself. Every push gets its own
-# tag; "dev" always points at the latest commit on main.
+# tag; "dev" always points at whichever push landed most recently, on any
+# branch — if you're working on more than one branch at a time, pin
+# :dev-<short-sha> instead so you know exactly which commit you're running.
 #
 # Usage:
 #   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 #
-# To pin a specific commit instead of "latest on main", set DASHBOARD_IMAGE:
+# To pin a specific commit instead of "latest pushed", set DASHBOARD_IMAGE:
 #   DASHBOARD_IMAGE=ghcr.io/x3n0n10/stream-share-dashboard:dev-abc1234 \
 #     docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 #
