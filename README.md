@@ -116,8 +116,8 @@ echo "$GITHUB_TOKEN" | docker login ghcr.io -u <your-github-username> --password
 - **Instances** — per-instance health, uptime, and enabled features
   (Discord, VOD cache, catchup).
 - **VPN** — optional; shows [gluetun](https://github.com/qdm12/gluetun)'s
-  connection status and exit IP/location, with Start/Stop buttons. Only
-  appears once configured (see below); otherwise shows how to enable it.
+  connection status and exit IP/location, with Start/Stop/Reconnect buttons.
+  Only appears once configured (see below); otherwise shows how to enable it.
 - **VOD Search** — search movies and series across every instance at once.
   Requires that instance's Xtream provider to be configured; instances
   proxying a plain M3U will show a per-instance error instead of results.
@@ -153,6 +153,7 @@ GLUETUN_API_KEY: ""
 # GLUETUN_PASSWORD: ""
 
 # GLUETUN_STATUS_PATH: "/v1/openvpn/status"  # override for older gluetun versions, see below
+# GLUETUN_RECONNECT_TIMEOUT_MS: "45000"  # overall budget for the Reconnect button, see below
 ```
 
 Leave `GLUETUN_URL` blank to hide the page entirely.
@@ -170,6 +171,15 @@ actual JSON shape your gluetun version returns if something looks off.
 gluetun's control server directly and will interrupt or expose whatever
 traffic is routed through it. The dashboard confirms before stopping, but
 there's no undo beyond hitting Start again.
+
+**Reconnect** collapses the manual "stop, wait, start, wait, keep refreshing"
+routine into one button: it stops the tunnel, confirms it actually stopped,
+starts it again, confirms it's running, then waits for a public IP to become
+resolvable again. The whole thing runs server-side as one request (budget:
+`GLUETUN_RECONNECT_TIMEOUT_MS`, default 45s, floor 15s) while the dashboard
+polls every second so the connection/exit IP cards update live as it
+progresses. Like Stop, it briefly interrupts traffic — but self-heals, so it
+isn't gated behind a confirmation dialog.
 
 ## Development
 

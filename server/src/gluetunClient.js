@@ -78,4 +78,55 @@ export async function getPublicIP(gluetun) {
   return request(gluetun, "/v1/publicip/ip");
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function waitForVpnStatus(gluetun, desired, deadline) {
+  for (;;) {
+    try {
+      const data = await getVpnStatus(gluetun);
+      if (data.status === desired) return data;
+    } catch {
+      // Transient (e.g. control server momentarily unreachable mid-restart)
+      // — keep polling until the deadline instead of failing on the first miss.
+    }
+    if (Date.now() >= deadline) {
+      throw new GluetunError(`Timed out waiting for VPN status "${desired}"`, 504);
+    }
+    await sleep(1000);
+  }
+}
+
+// Collapses the manual "stop, wait for it to confirm, start, wait, keep
+// refreshing until a new IP shows up" routine into one call: stop, confirm
+// stopped, start, confirm running, then poll for a public IP now that the
+// tunnel should be back up (retrying since routing/DNS can lag a few seconds
+// behind gluetun reporting "running").
+export async function reconnectVpn(gluetun) {
+  const deadline = Date.now() + gluetun.reconnectTimeoutMs;
+
+  await setVpnStatus(gluetun, "stopped");
+  await waitForVpnStatus(gluetun, "stopped", deadline);
+
+  await setVpnStatus(gluetun, "running");
+  const vpn = await waitForVpnStatus(gluetun, "running", deadline);
+
+  let publicIp = null;
+  let publicIpError = null;
+  for (;;) {
+    try {
+      publicIp = await getPublicIP(gluetun);
+      publicIpError = null;
+      break;
+    } catch (err) {
+      publicIpError = err.message;
+      if (Date.now() >= deadline) break;
+      await sleep(1000);
+    }
+  }
+
+  return { vpn, publicIp, publicIpError };
+}
+
 export { GluetunError };

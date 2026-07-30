@@ -24,8 +24,12 @@ function pick(obj, keys) {
 }
 
 export default function Vpn({ pollIntervalMs }) {
-  const { data, error, loading, updatedAt, refresh } = usePolling(() => api.gluetunStatus(), pollIntervalMs, []);
-  const [pending, setPending] = useState(null); // "start" | "stop" | null
+  const [pending, setPending] = useState(null); // "start" | "stop" | "reconnect" | null
+  const { data, error, loading, updatedAt, refresh } = usePolling(
+    () => api.gluetunStatus(),
+    pending === "reconnect" ? 1000 : pollIntervalMs,
+    []
+  );
   const [actionError, setActionError] = useState(null);
   const [confirmStop, setConfirmStop] = useState(false);
   const [showRaw, setShowRaw] = useState(false);
@@ -33,6 +37,7 @@ export default function Vpn({ pollIntervalMs }) {
   const vpnStatus = data?.vpn?.status || null;
   const running = vpnStatus === "running";
   const stopped = vpnStatus === "stopped";
+  const anyPending = pending !== null;
 
   async function runAction(action) {
     setActionError(null);
@@ -45,6 +50,19 @@ export default function Vpn({ pollIntervalMs }) {
     } finally {
       setPending(null);
       setConfirmStop(false);
+    }
+  }
+
+  async function reconnect() {
+    setActionError(null);
+    setPending("reconnect");
+    try {
+      await api.gluetunReconnect();
+    } catch (err) {
+      setActionError(err.message);
+    } finally {
+      await refresh();
+      setPending(null);
     }
   }
 
@@ -96,22 +114,40 @@ export default function Vpn({ pollIntervalMs }) {
                 <p className="text-xl font-semibold text-slate-900 dark:text-white">
                   {running ? "Connected" : stopped ? "Disconnected" : vpnStatus || "Unknown"}
                 </p>
+                {pending === "reconnect" && (
+                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">
+                    Reconnecting…
+                  </span>
+                )}
               </div>
               {data.vpnError && <ErrorNote message={data.vpnError} />}
 
-              <div className="mt-4 flex gap-2">
-                <Button tone="green" disabled={running} loading={pending === "start"} onClick={() => runAction("start")}>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Button
+                  tone="green"
+                  disabled={running || anyPending}
+                  loading={pending === "start"}
+                  onClick={() => runAction("start")}
+                >
                   Start
                 </Button>
                 <Button
                   tone="rose"
-                  disabled={stopped}
+                  disabled={stopped || anyPending}
                   loading={pending === "stop"}
                   onClick={() => setConfirmStop(true)}
                 >
                   Stop
                 </Button>
+                <Button tone="ghost" disabled={anyPending} loading={pending === "reconnect"} onClick={reconnect}>
+                  <IconRefresh className="h-3.5 w-3.5" />
+                  Reconnect
+                </Button>
               </div>
+              <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
+                Reconnect stops the tunnel, waits for it to confirm, starts it again, and waits for a fresh exit IP —
+                the dashboard refreshes every second while it works.
+              </p>
               {actionError && <div className="mt-2"><ErrorNote message={actionError} /></div>}
             </Card>
 

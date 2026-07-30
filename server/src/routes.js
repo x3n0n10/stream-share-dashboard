@@ -7,7 +7,7 @@ import {
   fetchStreams,
   fetchUserHistory,
 } from "./instanceClient.js";
-import { getVpnStatus, setVpnStatus, getPublicIP } from "./gluetunClient.js";
+import { getVpnStatus, setVpnStatus, getPublicIP, reconnectVpn } from "./gluetunClient.js";
 import { searchVOD, createVODDownload } from "./instanceClient.js";
 
 function findInstance(config, id) {
@@ -235,6 +235,23 @@ export function createRouter(config) {
     try {
       const status = await setVpnStatus(config.gluetun, desired);
       res.json(status);
+    } catch (err) {
+      res.status(err.status && err.status < 500 ? err.status : 502).json({ error: err.message });
+    }
+  });
+
+  // Stop, wait, start, wait, then wait for a public IP — the manual
+  // reconnect routine done in one call. May take a while (see
+  // GLUETUN_RECONNECT_TIMEOUT_MS); the frontend polls /gluetun separately at
+  // a faster interval to show state changes as they happen in the meantime.
+  router.post("/gluetun/reconnect", async (req, res) => {
+    if (!config.gluetun) {
+      return res.status(404).json({ error: "Gluetun is not configured (set GLUETUN_URL)" });
+    }
+
+    try {
+      const { vpn, publicIp, publicIpError } = await reconnectVpn(config.gluetun);
+      res.json({ enabled: true, vpn, vpnError: null, publicIp, publicIpError });
     } catch (err) {
       res.status(err.status && err.status < 500 ? err.status : 502).json({ error: err.message });
     }
