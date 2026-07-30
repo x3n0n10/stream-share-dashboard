@@ -82,6 +82,14 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// gluetun's public IP field name has varied across versions (mirrors the
+// same defensive lookup the frontend does for display). A 200 response with
+// an empty/missing IP isn't "success" — it just means gluetun hasn't
+// finished (re)resolving it yet.
+function hasUsableIp(data) {
+  return Boolean(data?.public_ip || data?.ip);
+}
+
 async function waitForVpnStatus(gluetun, desired, deadline) {
   for (;;) {
     try {
@@ -135,18 +143,26 @@ export async function reconnectVpn(gluetun) {
   await setVpnStatus(gluetun, "running");
   const vpn = await waitForVpnStatus(gluetun, "running", deadline);
 
+  // A 200 response here doesn't necessarily mean a usable IP came back —
+  // gluetun can report "running" and still return an empty public_ip for a
+  // few seconds while it finishes its own (re)resolution, so keep polling
+  // until the body actually has one, not just until the request succeeds.
   let publicIp = null;
   let publicIpError = null;
   for (;;) {
     try {
-      publicIp = await getPublicIP(gluetun);
-      publicIpError = null;
-      break;
+      const data = await getPublicIP(gluetun);
+      if (hasUsableIp(data)) {
+        publicIp = data;
+        publicIpError = null;
+        break;
+      }
+      publicIpError = "Public IP not resolved yet";
     } catch (err) {
       publicIpError = err.message;
-      if (Date.now() >= deadline) break;
-      await sleep(1000);
     }
+    if (Date.now() >= deadline) break;
+    await sleep(1000);
   }
 
   return { vpn, publicIp, publicIpError };

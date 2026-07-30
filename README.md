@@ -177,13 +177,16 @@ routine into one button: it stops the tunnel, confirms it actually stopped,
 then confirms traffic really isn't routing anymore (gluetun can report
 "stopped" before the tunnel actually tears down, so the status flag alone
 isn't trusted), starts it again, confirms it's running, then waits for a
-public IP to become resolvable again. The whole thing runs server-side as
-one request (budget:
+public IP to become resolvable again — checking the response actually has
+one, since gluetun can report success here too before it's really resolved.
+The whole thing runs server-side as one request (budget:
 `GLUETUN_RECONNECT_TIMEOUT_MS`, default 45s, floor 15s) while the dashboard
 polls every second so the connection/exit IP cards update live as it
-progresses. Like Stop, it briefly interrupts traffic, so it's confirmed
-before running — the confirmation closes immediately once you accept so you
-can watch the reconnect happen live instead of staring at a dialog.
+progresses, and keeps polling every second afterward until the exit IP card
+actually has a value (or ~20s pass without one). Like Stop, it briefly
+interrupts traffic, so it's confirmed before running — the confirmation
+closes immediately once you accept so you can watch the reconnect happen
+live instead of staring at a dialog.
 
 ## Development
 
