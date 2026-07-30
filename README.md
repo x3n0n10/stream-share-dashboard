@@ -174,8 +174,11 @@ there's no undo beyond hitting Start again.
 
 **Reconnect** collapses the manual "stop, wait, start, wait, keep refreshing"
 routine into one button: it stops the tunnel, confirms it actually stopped,
-starts it again, confirms it's running, then waits for a public IP to become
-resolvable again. The whole thing runs server-side as one request (budget:
+then confirms traffic really isn't routing anymore (gluetun can report
+"stopped" before the tunnel actually tears down, so the status flag alone
+isn't trusted), starts it again, confirms it's running, then waits for a
+public IP to become resolvable again. The whole thing runs server-side as
+one request (budget:
 `GLUETUN_RECONNECT_TIMEOUT_MS`, default 45s, floor 15s) while the dashboard
 polls every second so the connection/exit IP cards update live as it
 progresses. Like Stop, it briefly interrupts traffic, so it's confirmed

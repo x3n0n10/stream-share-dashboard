@@ -98,16 +98,39 @@ async function waitForVpnStatus(gluetun, desired, deadline) {
   }
 }
 
+// gluetun can flip its reported status to "stopped" before the underlying
+// tunnel process has actually torn down and stopped routing traffic, so the
+// status flag alone isn't proof the old connection is really gone. Wait for
+// the public IP probe to start failing too — that only happens once traffic
+// genuinely isn't routing through the tunnel anymore. Bounded to its own
+// budget (not the full reconnect deadline) because some setups don't
+// firewall off non-VPN traffic, so the probe might keep succeeding the
+// entire time the VPN is down — in that case, proceed anyway rather than
+// blocking the whole reconnect on a signal that will never come.
+async function waitForActuallyDisconnected(gluetun, deadline) {
+  const subDeadline = Math.min(deadline, Date.now() + 10000);
+  while (Date.now() < subDeadline) {
+    try {
+      await getPublicIP(gluetun);
+    } catch {
+      return;
+    }
+    await sleep(1000);
+  }
+}
+
 // Collapses the manual "stop, wait for it to confirm, start, wait, keep
 // refreshing until a new IP shows up" routine into one call: stop, confirm
-// stopped, start, confirm running, then poll for a public IP now that the
-// tunnel should be back up (retrying since routing/DNS can lag a few seconds
-// behind gluetun reporting "running").
+// stopped, confirm traffic actually isn't routing anymore, start, confirm
+// running, then poll for a public IP now that the tunnel should be back up
+// (retrying since routing/DNS can lag a few seconds behind gluetun
+// reporting "running").
 export async function reconnectVpn(gluetun) {
   const deadline = Date.now() + gluetun.reconnectTimeoutMs;
 
   await setVpnStatus(gluetun, "stopped");
   await waitForVpnStatus(gluetun, "stopped", deadline);
+  await waitForActuallyDisconnected(gluetun, deadline);
 
   await setVpnStatus(gluetun, "running");
   const vpn = await waitForVpnStatus(gluetun, "running", deadline);
