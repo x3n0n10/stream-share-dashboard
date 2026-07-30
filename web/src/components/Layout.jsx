@@ -27,6 +27,12 @@ const NAV_ITEMS = [
   { to: "/vod", label: "VOD Search", icon: IconSearch },
 ];
 
+// Mobile bottom nav only has room for a handful of items — the rest stay
+// reachable through the hamburger drawer. Filtering (rather than a fixed
+// slice) keeps this list in sync if NAV_ITEMS is ever reordered.
+const MOBILE_NAV_PATHS = ["/", "/live", "/vpn", "/vod"];
+const MOBILE_NAV_ITEMS = NAV_ITEMS.filter((item) => MOBILE_NAV_PATHS.includes(item.to));
+
 function NavList({ onNavigate }) {
   return (
     <nav className="flex flex-1 flex-col gap-1 px-3">
@@ -128,7 +134,7 @@ export default function Layout({ title, children, headerExtra }) {
 
       {/* Mobile bottom nav */}
       <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95 lg:hidden">
-        {NAV_ITEMS.slice(0, 5).map(({ to, label, icon: Icon, end }) => (
+        {MOBILE_NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
           <NavLink
             key={to}
             to={to}

@@ -59,6 +59,11 @@ function readGluetun(env) {
         : null,
     statusPath: env.GLUETUN_STATUS_PATH || "/v1/vpn/status",
     timeoutMs: Math.max(1000, Number(env.GLUETUN_TIMEOUT_MS) || 5000),
+    // Overall budget for the "Reconnect" action: stop, confirm stopped, start,
+    // confirm running, then wait for a resolvable public IP. Generous because
+    // the tunnel handshake + DNS/IP-lookup after starting is the slow part
+    // and varies a lot by provider.
+    reconnectTimeoutMs: Math.max(15000, Number(env.GLUETUN_RECONNECT_TIMEOUT_MS) || 45000),
   };
 }
 
