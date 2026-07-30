@@ -32,6 +32,7 @@ export default function Vpn({ pollIntervalMs }) {
   );
   const [actionError, setActionError] = useState(null);
   const [confirmStop, setConfirmStop] = useState(false);
+  const [confirmReconnect, setConfirmReconnect] = useState(false);
   const [showRaw, setShowRaw] = useState(false);
 
   const vpnStatus = data?.vpn?.status || null;
@@ -63,6 +64,7 @@ export default function Vpn({ pollIntervalMs }) {
     } finally {
       await refresh();
       setPending(null);
+      setConfirmReconnect(false);
     }
   }
 
@@ -139,7 +141,12 @@ export default function Vpn({ pollIntervalMs }) {
                 >
                   Stop
                 </Button>
-                <Button tone="ghost" disabled={anyPending} loading={pending === "reconnect"} onClick={reconnect}>
+                <Button
+                  tone="ghost"
+                  disabled={anyPending}
+                  loading={pending === "reconnect"}
+                  onClick={() => setConfirmReconnect(true)}
+                >
                   <IconRefresh className="h-3.5 w-3.5" />
                   Reconnect
                 </Button>
@@ -199,6 +206,19 @@ export default function Vpn({ pollIntervalMs }) {
         tone="rose"
         onConfirm={() => runAction("stop")}
         onCancel={() => setConfirmStop(false)}
+      />
+
+      <ConfirmDialog
+        open={confirmReconnect}
+        title="Reconnect the VPN?"
+        body="This stops and restarts the tunnel, the same as Stop followed by Start. Any traffic routed through it will be interrupted until it comes back up, which can take a while depending on your provider."
+        confirmLabel="Reconnect"
+        tone="rose"
+        onConfirm={() => {
+          setConfirmReconnect(false);
+          reconnect();
+        }}
+        onCancel={() => setConfirmReconnect(false)}
       />
     </Layout>
   );

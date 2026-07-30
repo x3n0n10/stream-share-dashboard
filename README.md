@@ -178,8 +178,9 @@ starts it again, confirms it's running, then waits for a public IP to become
 resolvable again. The whole thing runs server-side as one request (budget:
 `GLUETUN_RECONNECT_TIMEOUT_MS`, default 45s, floor 15s) while the dashboard
 polls every second so the connection/exit IP cards update live as it
-progresses. Like Stop, it briefly interrupts traffic — but self-heals, so it
-isn't gated behind a confirmation dialog.
+progresses. Like Stop, it briefly interrupts traffic, so it's confirmed
+before running — the confirmation closes immediately once you accept so you
+can watch the reconnect happen live instead of staring at a dialog.
 
 ## Development
 
