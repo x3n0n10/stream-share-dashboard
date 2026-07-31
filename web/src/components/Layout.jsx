@@ -15,6 +15,7 @@ import {
   IconClose,
 } from "./Icons.jsx";
 import { useTheme } from "../lib/useTheme.js";
+import { useConfig } from "../lib/ConfigContext.jsx";
 
 const NAV_ITEMS = [
   { to: "/", label: "Overview", icon: IconOverview, end: true },
@@ -61,15 +62,17 @@ function NavList({ onNavigate }) {
 export default function Layout({ title, children, headerExtra }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [theme, toggleTheme] = useTheme();
+  const config = useConfig();
+  const siteTitle = config?.title || "Stream Share Dashboard";
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col border-r border-slate-200 bg-white py-5 dark:border-slate-800 dark:bg-slate-900 lg:flex">
-        <div className="mb-6 flex items-center gap-2 px-4">
+        <div className="mb-6 flex min-w-0 items-center gap-2 px-4">
           <span className="text-xl">📡</span>
-          <span className="text-sm font-semibold text-slate-900 dark:text-white">
-            Stream Share
+          <span className="truncate text-sm font-semibold text-slate-900 dark:text-white">
+            {siteTitle}
           </span>
         </div>
         <NavList />
@@ -87,11 +90,11 @@ export default function Layout({ title, children, headerExtra }) {
             aria-hidden="true"
           />
           <div className="absolute inset-y-0 left-0 flex w-64 flex-col bg-white py-5 dark:bg-slate-900">
-            <div className="mb-6 flex items-center justify-between px-4">
-              <div className="flex items-center gap-2">
+            <div className="mb-6 flex items-center justify-between gap-2 px-4">
+              <div className="flex min-w-0 items-center gap-2">
                 <span className="text-xl">📡</span>
-                <span className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Stream Share
+                <span className="truncate text-sm font-semibold text-slate-900 dark:text-white">
+                  {siteTitle}
                 </span>
               </div>
               <button
