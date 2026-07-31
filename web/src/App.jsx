@@ -9,6 +9,7 @@ import Instances from "./pages/Instances.jsx";
 import Vpn from "./pages/Vpn.jsx";
 import Vod from "./pages/Vod.jsx";
 import { api } from "./lib/api.js";
+import { ConfigProvider } from "./lib/ConfigContext.jsx";
 
 export default function App() {
   const [config, setConfig] = useState(null);
@@ -26,15 +27,17 @@ export default function App() {
   const pollIntervalMs = config?.pollIntervalMs || 15000;
 
   return (
-    <Routes>
-      <Route path="/" element={<Overview pollIntervalMs={pollIntervalMs} />} />
-      <Route path="/live" element={<Live pollIntervalMs={pollIntervalMs} />} />
-      <Route path="/history" element={<History pollIntervalMs={pollIntervalMs} />} />
-      <Route path="/leaderboard" element={<Leaderboard pollIntervalMs={pollIntervalMs} />} />
-      <Route path="/users" element={<Users pollIntervalMs={pollIntervalMs} />} />
-      <Route path="/instances" element={<Instances pollIntervalMs={pollIntervalMs} />} />
-      <Route path="/vpn" element={<Vpn pollIntervalMs={pollIntervalMs} />} />
-      <Route path="/vod" element={<Vod />} />
-    </Routes>
+    <ConfigProvider config={config}>
+      <Routes>
+        <Route path="/" element={<Overview pollIntervalMs={pollIntervalMs} />} />
+        <Route path="/live" element={<Live pollIntervalMs={pollIntervalMs} />} />
+        <Route path="/history" element={<History pollIntervalMs={pollIntervalMs} />} />
+        <Route path="/leaderboard" element={<Leaderboard pollIntervalMs={pollIntervalMs} />} />
+        <Route path="/users" element={<Users pollIntervalMs={pollIntervalMs} />} />
+        <Route path="/instances" element={<Instances pollIntervalMs={pollIntervalMs} />} />
+        <Route path="/vpn" element={<Vpn pollIntervalMs={pollIntervalMs} />} />
+        <Route path="/vod" element={<Vod />} />
+      </Routes>
+    </ConfigProvider>
   );
 }
