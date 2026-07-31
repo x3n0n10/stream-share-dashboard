@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Layout from "../components/Layout.jsx";
 import {
   Card,
@@ -23,11 +23,24 @@ function pick(obj, keys) {
   return null;
 }
 
+// Reconnect's own wait can still hand back a not-quite-ready IP (gluetun
+// reporting "running" a beat before its public IP actually re-resolves) —
+// checked the same way the display does, so "settling" only clears once
+// there's really something to show.
+function hasUsableIp(ip) {
+  return Boolean(pick(ip, ["public_ip", "ip"]));
+}
+
+const SETTLE_TIMEOUT_MS = 20000;
+
 export default function Vpn({ pollIntervalMs }) {
   const [pending, setPending] = useState(null); // "start" | "stop" | "reconnect" | null
+  const [settling, setSettling] = useState(false); // reconnect finished; still fast-polling for a real IP
+  const settleDeadlineRef = useRef(0);
+  const fastPoll = pending === "reconnect" || settling;
   const { data, error, loading, updatedAt, refresh } = usePolling(
     () => api.gluetunStatus(),
-    pending === "reconnect" ? 1000 : pollIntervalMs,
+    fastPoll ? 1000 : pollIntervalMs,
     []
   );
   const [actionError, setActionError] = useState(null);
@@ -39,6 +52,16 @@ export default function Vpn({ pollIntervalMs }) {
   const running = vpnStatus === "running";
   const stopped = vpnStatus === "stopped";
   const anyPending = pending !== null;
+
+  // Once settling, keep re-checking each freshly-polled result: stop as soon
+  // as a real IP shows up, or after SETTLE_TIMEOUT_MS if it never does (at
+  // which point publicIpError is shown instead — see the Exit IP card).
+  useEffect(() => {
+    if (!settling) return;
+    if (hasUsableIp(data?.publicIp) || Date.now() >= settleDeadlineRef.current) {
+      setSettling(false);
+    }
+  }, [settling, data]);
 
   async function runAction(action) {
     setActionError(null);
@@ -65,6 +88,8 @@ export default function Vpn({ pollIntervalMs }) {
       await refresh();
       setPending(null);
       setConfirmReconnect(false);
+      settleDeadlineRef.current = Date.now() + SETTLE_TIMEOUT_MS;
+      setSettling(true);
     }
   }
 
@@ -121,6 +146,11 @@ export default function Vpn({ pollIntervalMs }) {
                     Reconnecting…
                   </span>
                 )}
+                {settling && (
+                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">
+                    Waiting for exit IP…
+                  </span>
+                )}
               </div>
               {data.vpnError && <ErrorNote message={data.vpnError} />}
 
@@ -153,7 +183,8 @@ export default function Vpn({ pollIntervalMs }) {
               </div>
               <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
                 Reconnect stops the tunnel, waits for it to confirm, starts it again, and waits for a fresh exit IP —
-                the dashboard refreshes every second while it works.
+                the dashboard refreshes every second while it works, and keeps doing so afterward until the exit IP
+                card actually has a value.
               </p>
               {actionError && <div className="mt-2"><ErrorNote message={actionError} /></div>}
             </Card>
