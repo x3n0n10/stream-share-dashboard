@@ -99,6 +99,26 @@ echo "$GITHUB_TOKEN" | docker login ghcr.io -u <your-github-username> --password
 (A classic PAT with `read:packages` scope works too, in place of
 `$GITHUB_TOKEN`.)
 
+## Stable releases
+
+Publishing a [GitHub Release](https://github.com/x3n0n10/stream-share-dashboard/releases)
+(e.g. tagging `v1.1`) runs the `Release Image` workflow
+(`.github/workflows/release-image.yml`), which builds and publishes:
+
+- `ghcr.io/x3n0n10/stream-share-dashboard:<tag>` — e.g. `:v1.1`, that exact
+  release, never moves.
+- `ghcr.io/x3n0n10/stream-share-dashboard:latest` — floating tag that always
+  points at the most recently published release. Pre-releases get their own
+  version tag but don't move `:latest`.
+
+Same override file as the dev images works here too, just point
+`DASHBOARD_IMAGE` at a release tag instead:
+
+```bash
+DASHBOARD_IMAGE=ghcr.io/x3n0n10/stream-share-dashboard:latest \
+  docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+```
+
 ## What it shows
 
 - **Overview** — global totals plus a live status card per instance and a
