@@ -6,6 +6,8 @@ services:
     # a ready-made override, or just use one of these tags directly:
     #   image: ghcr.io/x3n0n10/stream-share-dashboard:dev            # latest pushed (any branch)
     #   image: ghcr.io/x3n0n10/stream-share-dashboard:dev-<shortsha> # one specific commit
+    #   image: ghcr.io/x3n0n10/stream-share-dashboard:latest         # most recent stable release
+    #   image: ghcr.io/x3n0n10/stream-share-dashboard:v1.1           # one specific release
     container_name: stream-share-dashboard
     restart: unless-stopped
     ports:
