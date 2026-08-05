@@ -41,4 +41,9 @@ export const api = {
   vodSearch: (q) => get("/api/vod/search", { q }),
   vodDownload: (instanceId, streamId, title, type) =>
     post(`/api/instances/${instanceId}/vod/download`, { streamId, title, type }),
+  aliases: () => get("/api/aliases"),
+  createAlias: (instanceId, ipAddress, alias) =>
+    post(`/api/instances/${instanceId}/aliases`, { ipAddress, alias }),
+  deleteAlias: (instanceId, ipAddress) =>
+    post(`/api/instances/${instanceId}/aliases/delete`, { ipAddress }),
 };

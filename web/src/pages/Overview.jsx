@@ -7,6 +7,16 @@ import { api } from "../lib/api.js";
 import { usePolling } from "../lib/usePolling.js";
 import { formatDuration, formatNumber, formatRelativeTime, titleCase } from "../lib/format.js";
 
+// stream-share instances running the IP-alias feature return viewers as
+// {id, display_name} objects instead of plain username/IP strings — support
+// both so this keeps working against older instances too.
+function viewerId(v) {
+  return typeof v === "string" ? v : v.id;
+}
+function viewerLabel(v) {
+  return typeof v === "string" ? v : v.display_name || v.id;
+}
+
 export default function Overview({ pollIntervalMs }) {
   const [hours, setHours] = useState(24);
   const { data, error, loading, updatedAt, refresh } = usePolling(
@@ -159,10 +169,10 @@ export default function Overview({ pollIntervalMs }) {
                               <div className="mt-1 flex max-w-[10rem] flex-wrap gap-1">
                                 {s.viewers.map((v) => (
                                   <span
-                                    key={v}
+                                    key={viewerId(v)}
                                     className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600 dark:bg-slate-800 dark:text-slate-300"
                                   >
-                                    {v}
+                                    {viewerLabel(v)}
                                   </span>
                                 ))}
                               </div>

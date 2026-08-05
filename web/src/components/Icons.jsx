@@ -181,3 +181,22 @@ export function IconChevronDown({ className }) {
     </svg>
   );
 }
+
+export function IconTag({ className }) {
+  return (
+    <svg className={className} {...base}>
+      <path d="M11.6 3H5.5A2.5 2.5 0 0 0 3 5.5v6.1c0 .66.26 1.3.73 1.77l8.9 8.9a2.5 2.5 0 0 0 3.54 0l6.1-6.1a2.5 2.5 0 0 0 0-3.54l-8.9-8.9A2.5 2.5 0 0 0 11.6 3z" />
+      <circle cx="8" cy="8" r="1.3" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+export function IconTrash({ className }) {
+  return (
+    <svg className={className} {...base}>
+      <path d="M4 7h16M9 7V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V7" />
+      <path d="M6 7l1 13.5A1.5 1.5 0 0 0 8.5 22h7a1.5 1.5 0 0 0 1.5-1.5L18 7" />
+      <path d="M10 11v6M14 11v6" />
+    </svg>
+  );
+}

@@ -121,4 +121,25 @@ export async function createVODDownload(instance, { username, streamId, title, t
   });
 }
 
+// IP aliases are per-instance (each instance has its own DB), not shared —
+// an alias set on one instance has no effect on another.
+export async function fetchIPAliases(instance, { timeoutMs }) {
+  return callInstance(instance, "/ip-aliases", { timeoutMs });
+}
+
+export async function upsertIPAlias(instance, { ipAddress, alias }, { timeoutMs }) {
+  return callInstance(instance, "/ip-aliases", {
+    timeoutMs,
+    method: "POST",
+    body: { ip_address: ipAddress, alias },
+  });
+}
+
+export async function deleteIPAlias(instance, ipAddress, { timeoutMs }) {
+  return callInstance(instance, `/ip-aliases/delete/${encodeURIComponent(ipAddress)}`, {
+    timeoutMs,
+    method: "POST",
+  });
+}
+
 export { InstanceError };

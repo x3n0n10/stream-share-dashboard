@@ -132,6 +132,13 @@ DASHBOARD_IMAGE=ghcr.io/x3n0n10/stream-share-dashboard:latest \
 - **Leaderboard** — top titles and top viewers, summed across instances for
   the selected time window.
 - **Users** — every known user session across instances, watching or idle.
+- **Aliases** — give a friendly name to viewers that show up by IP address
+  (e.g. when an instance has LDAP disabled and falls back to using the
+  client's IP as its per-viewer identity). Aliases are per instance, set
+  through that instance's own `/api/internal/ip-aliases` endpoints — once
+  set, the alias replaces the raw IP anywhere a viewer identity is shown
+  (Overview, Users, History) and requires a stream-share version with the
+  IP-alias feature; older instances just show raw IPs as before.
 - **Instances** — per-instance health, uptime, and enabled features
   (Discord, VOD cache, catchup).
 - **VPN** — optional; shows [gluetun](https://github.com/qdm12/gluetun)'s

@@ -7,6 +7,7 @@ import Users from "./pages/Users.jsx";
 import Instances from "./pages/Instances.jsx";
 import Vpn from "./pages/Vpn.jsx";
 import Vod from "./pages/Vod.jsx";
+import Aliases from "./pages/Aliases.jsx";
 import { api } from "./lib/api.js";
 import { ConfigProvider } from "./lib/ConfigContext.jsx";
 
@@ -32,6 +33,7 @@ export default function App() {
         <Route path="/history" element={<History pollIntervalMs={pollIntervalMs} />} />
         <Route path="/leaderboard" element={<Leaderboard pollIntervalMs={pollIntervalMs} />} />
         <Route path="/users" element={<Users pollIntervalMs={pollIntervalMs} />} />
+        <Route path="/aliases" element={<Aliases pollIntervalMs={pollIntervalMs} />} />
         <Route path="/instances" element={<Instances pollIntervalMs={pollIntervalMs} />} />
         <Route path="/vpn" element={<Vpn pollIntervalMs={pollIntervalMs} />} />
         <Route path="/vod" element={<Vod />} />
