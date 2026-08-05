@@ -82,14 +82,6 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// gluetun's public IP field name has varied across versions (mirrors the
-// same defensive lookup the frontend does for display). A 200 response with
-// an empty/missing IP isn't "success" — it just means gluetun hasn't
-// finished (re)resolving it yet.
-function hasUsableIp(data) {
-  return Boolean(data?.public_ip || data?.ip);
-}
-
 async function waitForVpnStatus(gluetun, desired, deadline) {
   for (;;) {
     try {
@@ -106,66 +98,24 @@ async function waitForVpnStatus(gluetun, desired, deadline) {
   }
 }
 
-// gluetun can flip its reported status to "stopped" before the underlying
-// tunnel process has actually torn down and stopped routing traffic, so the
-// status flag alone isn't proof the old connection is really gone. Wait for
-// the public IP probe to start failing too — that only happens once traffic
-// genuinely isn't routing through the tunnel anymore. Bounded to its own
-// budget (not the full reconnect deadline) because some setups don't
-// firewall off non-VPN traffic, so the probe might keep succeeding the
-// entire time the VPN is down — in that case, proceed anyway rather than
-// blocking the whole reconnect on a signal that will never come.
-async function waitForActuallyDisconnected(gluetun, deadline) {
-  const subDeadline = Math.min(deadline, Date.now() + 10000);
-  while (Date.now() < subDeadline) {
-    try {
-      await getPublicIP(gluetun);
-    } catch {
-      return;
-    }
-    await sleep(1000);
-  }
-}
-
-// Collapses the manual "stop, wait for it to confirm, start, wait, keep
-// refreshing until a new IP shows up" routine into one call: stop, confirm
-// stopped, confirm traffic actually isn't routing anymore, start, confirm
-// running, then poll for a public IP now that the tunnel should be back up
-// (retrying since routing/DNS can lag a few seconds behind gluetun
-// reporting "running").
+// Collapses the manual "stop, wait for it to confirm, start, wait for it to
+// confirm again" routine into one call: stop, confirm stopped, start,
+// confirm running. Deliberately doesn't touch /v1/publicip/ip at all —
+// polling that endpoint in a tight loop here (on top of the dashboard's own
+// regular status polling) was hammering gluetun's public IP lookup.
+// "Reconnected" is purely the VPN status flipping to "running"; the exit IP
+// simply shows up whenever it next appears via the dashboard's normal
+// (much less frequent) status polling, same as any other status change.
 export async function reconnectVpn(gluetun) {
   const deadline = Date.now() + gluetun.reconnectTimeoutMs;
 
   await setVpnStatus(gluetun, "stopped");
   await waitForVpnStatus(gluetun, "stopped", deadline);
-  await waitForActuallyDisconnected(gluetun, deadline);
 
   await setVpnStatus(gluetun, "running");
   const vpn = await waitForVpnStatus(gluetun, "running", deadline);
 
-  // A 200 response here doesn't necessarily mean a usable IP came back —
-  // gluetun can report "running" and still return an empty public_ip for a
-  // few seconds while it finishes its own (re)resolution, so keep polling
-  // until the body actually has one, not just until the request succeeds.
-  let publicIp = null;
-  let publicIpError = null;
-  for (;;) {
-    try {
-      const data = await getPublicIP(gluetun);
-      if (hasUsableIp(data)) {
-        publicIp = data;
-        publicIpError = null;
-        break;
-      }
-      publicIpError = "Public IP not resolved yet";
-    } catch (err) {
-      publicIpError = err.message;
-    }
-    if (Date.now() >= deadline) break;
-    await sleep(1000);
-  }
-
-  return { vpn, publicIp, publicIpError };
+  return { vpn };
 }
 
 export { GluetunError };

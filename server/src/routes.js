@@ -240,18 +240,18 @@ export function createRouter(config) {
     }
   });
 
-  // Stop, wait, start, wait, then wait for a public IP — the manual
-  // reconnect routine done in one call. May take a while (see
-  // GLUETUN_RECONNECT_TIMEOUT_MS); the frontend polls /gluetun separately at
-  // a faster interval to show state changes as they happen in the meantime.
+  // Stop, wait, start, wait — the manual reconnect routine done in one call.
+  // Doesn't touch the public IP endpoint itself (see reconnectVpn); the
+  // frontend polls /gluetun separately at a faster interval, which is where
+  // the exit IP naturally shows up once it's ready.
   router.post("/gluetun/reconnect", async (req, res) => {
     if (!config.gluetun) {
       return res.status(404).json({ error: "Gluetun is not configured (set GLUETUN_URL)" });
     }
 
     try {
-      const { vpn, publicIp, publicIpError } = await reconnectVpn(config.gluetun);
-      res.json({ enabled: true, vpn, vpnError: null, publicIp, publicIpError });
+      const { vpn } = await reconnectVpn(config.gluetun);
+      res.json({ enabled: true, vpn, vpnError: null });
     } catch (err) {
       res.status(err.status && err.status < 500 ? err.status : 502).json({ error: err.message });
     }
