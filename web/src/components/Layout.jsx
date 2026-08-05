@@ -29,7 +29,7 @@ const NAV_ITEMS = [
 // Mobile bottom nav only has room for a handful of items — the rest stay
 // reachable through the hamburger drawer. Filtering (rather than a fixed
 // slice) keeps this list in sync if NAV_ITEMS is ever reordered.
-const MOBILE_NAV_PATHS = ["/", "/vpn", "/vod"];
+const MOBILE_NAV_PATHS = ["/", "/history", "/vpn", "/vod"];
 const MOBILE_NAV_ITEMS = NAV_ITEMS.filter((item) => MOBILE_NAV_PATHS.includes(item.to));
 
 function NavList({ onNavigate }) {
