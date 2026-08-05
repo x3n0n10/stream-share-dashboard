@@ -134,11 +134,18 @@ DASHBOARD_IMAGE=ghcr.io/x3n0n10/stream-share-dashboard:latest \
 - **Users** — every known user session across instances, watching or idle.
 - **Aliases** — give a friendly name to viewers that show up by IP address
   (e.g. when an instance has LDAP disabled and falls back to using the
-  client's IP as its per-viewer identity). Aliases are per instance, set
-  through that instance's own `/api/internal/ip-aliases` endpoints — once
-  set, the alias replaces the raw IP anywhere a viewer identity is shown
-  (Overview, Users, History) and requires a stream-share version with the
-  IP-alias feature; older instances just show raw IPs as before.
+  client's IP as its per-viewer identity). An alias means the same thing
+  regardless of which instance a viewer hits, but each instance stores its
+  own copy (separate DBs, via that instance's own `/api/internal/ip-aliases`
+  endpoints) — adding one applies it to every configured instance at once by
+  default (toggle off to target just one), and the table groups by IP so a
+  synced alias shows as one row instead of one per instance, only flagging
+  as "mixed" if a set has actually drifted. On Overview, any viewer chip
+  that's still showing a raw, un-aliased IP links straight to this page with
+  that IP prefilled. Once set, the alias replaces the raw IP anywhere a
+  viewer identity is shown (Overview, Users, History) and requires a
+  stream-share version with the IP-alias feature; older instances just show
+  raw IPs as before.
 - **Instances** — per-instance health, uptime, and enabled features
   (Discord, VOD cache, catchup).
 - **VPN** — optional; shows [gluetun](https://github.com/qdm12/gluetun)'s
