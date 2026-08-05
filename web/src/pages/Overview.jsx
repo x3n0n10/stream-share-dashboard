@@ -1,11 +1,33 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import Layout from "../components/Layout.jsx";
 import HoursSelect from "../components/HoursSelect.jsx";
 import { Card, StatTile, Badge, StatusDot, EmptyState, ErrorNote, Skeleton, TechSummary } from "../components/common.jsx";
-import { IconOverview, IconPlay, IconUsers, IconHistory, IconRefresh } from "../components/Icons.jsx";
+import { IconOverview, IconPlay, IconUsers, IconHistory, IconRefresh, IconTag } from "../components/Icons.jsx";
 import { api } from "../lib/api.js";
 import { usePolling } from "../lib/usePolling.js";
 import { formatDuration, formatNumber, formatRelativeTime, titleCase } from "../lib/format.js";
+
+// stream-share instances running the IP-alias feature return viewers as
+// {id, display_name} objects instead of plain username/IP strings — support
+// both so this keeps working against older instances too.
+function viewerId(v) {
+  return typeof v === "string" ? v : v.id;
+}
+function viewerLabel(v) {
+  return typeof v === "string" ? v : v.display_name || v.id;
+}
+
+// A viewer is only ever aliased when LDAP is disabled and the raw client IP
+// stands in as their identity (see displayNameFor in stream-share), so only
+// offer the "add alias" shortcut for identifiers that actually look like an
+// IP address, and only when it doesn't already have one.
+const IP_RE = /^(\d{1,3}\.){3}\d{1,3}$|^[0-9a-fA-F]*:[0-9a-fA-F:]*$/;
+function isAliasable(v) {
+  const id = viewerId(v);
+  if (!IP_RE.test(id)) return false;
+  return viewerLabel(v) === id;
+}
 
 export default function Overview({ pollIntervalMs }) {
   const [hours, setHours] = useState(24);
@@ -138,15 +160,15 @@ export default function Overview({ pollIntervalMs }) {
                           <td className="max-w-[16rem] px-4 py-2.5">
                             <p className="truncate font-medium text-slate-800 dark:text-slate-100">
                               {s.stream_title || s.stream_id}
+                              {s.epg_channel_id && (
+                                <span className="ml-1.5 text-xs font-normal text-slate-400 dark:text-slate-500">
+                                  {s.epg_channel_id}
+                                </span>
+                              )}
                             </p>
                             <TechSummary tech={s.tech} className="truncate" />
                           </td>
-                          <td className="px-4 py-2.5 text-slate-500 dark:text-slate-400">
-                            {s.instanceName}
-                            {s.epg_channel_id && (
-                              <p className="text-xs text-slate-400 dark:text-slate-500">{s.epg_channel_id}</p>
-                            )}
-                          </td>
+                          <td className="px-4 py-2.5 text-slate-500 dark:text-slate-400">{s.instanceName}</td>
                           <td className="px-4 py-2.5">
                             <Badge tone="slate">{titleCase(s.stream_type)}</Badge>
                           </td>
@@ -157,14 +179,26 @@ export default function Overview({ pollIntervalMs }) {
                             </span>
                             {s.viewers?.length > 0 && (
                               <div className="mt-1 flex max-w-[10rem] flex-wrap gap-1">
-                                {s.viewers.map((v) => (
-                                  <span
-                                    key={v}
-                                    className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600 dark:bg-slate-800 dark:text-slate-300"
-                                  >
-                                    {v}
-                                  </span>
-                                ))}
+                                {s.viewers.map((v) =>
+                                  isAliasable(v) ? (
+                                    <Link
+                                      key={viewerId(v)}
+                                      to={`/aliases?ip=${encodeURIComponent(viewerId(v))}`}
+                                      title={`Add an alias for ${viewerId(v)}`}
+                                      className="flex items-center gap-0.5 rounded-full border border-dashed border-slate-300 px-2 py-0.5 text-[11px] text-slate-500 hover:border-accent-400 hover:text-accent-600 dark:border-slate-600 dark:text-slate-400 dark:hover:border-accent-500 dark:hover:text-accent-400"
+                                    >
+                                      {viewerLabel(v)}
+                                      <IconTag className="h-2.5 w-2.5" />
+                                    </Link>
+                                  ) : (
+                                    <span
+                                      key={viewerId(v)}
+                                      className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                                    >
+                                      {viewerLabel(v)}
+                                    </span>
+                                  )
+                                )}
                               </div>
                             )}
                           </td>

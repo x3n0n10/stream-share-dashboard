@@ -17,6 +17,7 @@ export default function Users({ pollIntervalMs }) {
     return users.filter(
       (u) =>
         u.Username?.toLowerCase().includes(q) ||
+        u.display_name?.toLowerCase().includes(q) ||
         u.instance_name?.toLowerCase().includes(q) ||
         u.StreamID?.toLowerCase().includes(q)
     );
@@ -87,7 +88,7 @@ export default function Users({ pollIntervalMs }) {
                   {sorted.map((u, idx) => (
                     <tr key={`${u.instance_id}-${u.Username}-${idx}`}>
                       <td className="px-4 py-2.5 font-medium text-slate-800 dark:text-slate-100">
-                        {u.Username}
+                        {u.display_name || u.Username}
                         {u.DiscordName && (
                           <span className="ml-1.5 text-xs text-slate-400">({u.DiscordName})</span>
                         )}

@@ -23,6 +23,7 @@ export default function History({ pollIntervalMs }) {
     return feed.filter(
       (e) =>
         e.username?.toLowerCase().includes(q) ||
+        e.display_name?.toLowerCase().includes(q) ||
         e.stream_title?.toLowerCase().includes(q) ||
         e.instance_name?.toLowerCase().includes(q)
     );
@@ -91,7 +92,14 @@ export default function History({ pollIntervalMs }) {
                       <td className="whitespace-nowrap px-4 py-2.5 text-slate-500 dark:text-slate-400">
                         {formatDateTime(e.start_time)}
                       </td>
-                      <td className="px-4 py-2.5 font-medium text-slate-800 dark:text-slate-100">{e.username}</td>
+                      <td className="px-4 py-2.5 font-medium text-slate-800 dark:text-slate-100">
+                        {e.display_name || e.username}
+                        {e.display_name && e.display_name !== e.username && (
+                          <span className="ml-1.5 text-xs font-normal text-slate-400 dark:text-slate-500">
+                            {e.username}
+                          </span>
+                        )}
+                      </td>
                       <td className="max-w-[16rem] truncate px-4 py-2.5">{e.stream_title}</td>
                       <td className="px-4 py-2.5">
                         <Badge tone="slate">{titleCase(e.stream_type)}</Badge>

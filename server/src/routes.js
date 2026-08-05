@@ -6,6 +6,9 @@ import {
   fetchUsers,
   fetchStreams,
   fetchUserHistory,
+  fetchIPAliases,
+  upsertIPAlias,
+  deleteIPAlias,
 } from "./instanceClient.js";
 import { getVpnStatus, setVpnStatus, getPublicIP, reconnectVpn } from "./gluetunClient.js";
 import { searchVOD, createVODDownload } from "./instanceClient.js";
@@ -308,6 +311,66 @@ export function createRouter(config) {
         opts
       );
       res.json(data);
+    } catch (err) {
+      res.status(err.status && err.status < 500 ? err.status : 502).json({ error: err.message });
+    }
+  });
+
+  // Every configured IP -> alias, across every instance. Aliases are
+  // per-instance (each instance has its own DB), so each row is tagged with
+  // which instance it belongs to rather than being deduplicated globally.
+  router.get("/aliases", async (req, res) => {
+    const results = await Promise.allSettled(
+      config.instances.map((instance) => fetchIPAliases(instance, opts))
+    );
+
+    const errors = [];
+    const merged = [];
+    config.instances.forEach((instance, idx) => {
+      const r = results[idx];
+      if (r.status === "fulfilled") {
+        for (const a of r.value || []) {
+          merged.push({ ...a, instance_id: instance.id, instance_name: instance.name });
+        }
+      } else {
+        errors.push({ instanceId: instance.id, instanceName: instance.name, error: r.reason.message });
+      }
+    });
+
+    merged.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+
+    res.json({ aliases: merged, errors });
+  });
+
+  // Creates the alias for an IP on one instance, or replaces its existing one.
+  router.post("/instances/:id/aliases", async (req, res) => {
+    const instance = findInstance(config, req.params.id);
+    if (!instance) return res.status(404).json({ error: "Unknown instance" });
+
+    const { ipAddress, alias } = req.body;
+    if (!ipAddress || !alias) {
+      return res.status(400).json({ error: "ipAddress and alias are required" });
+    }
+
+    try {
+      const data = await upsertIPAlias(instance, { ipAddress, alias }, opts);
+      res.json(data);
+    } catch (err) {
+      res.status(err.status && err.status < 500 ? err.status : 502).json({ error: err.message });
+    }
+  });
+
+  // Removes the alias for an IP on one instance, if it has one.
+  router.post("/instances/:id/aliases/delete", async (req, res) => {
+    const instance = findInstance(config, req.params.id);
+    if (!instance) return res.status(404).json({ error: "Unknown instance" });
+
+    const { ipAddress } = req.body;
+    if (!ipAddress) return res.status(400).json({ error: "ipAddress is required" });
+
+    try {
+      await deleteIPAlias(instance, ipAddress, opts);
+      res.json({ success: true });
     } catch (err) {
       res.status(err.status && err.status < 500 ? err.status : 502).json({ error: err.message });
     }
