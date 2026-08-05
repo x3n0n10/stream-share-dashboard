@@ -160,15 +160,15 @@ export default function Overview({ pollIntervalMs }) {
                           <td className="max-w-[16rem] px-4 py-2.5">
                             <p className="truncate font-medium text-slate-800 dark:text-slate-100">
                               {s.stream_title || s.stream_id}
+                              {s.epg_channel_id && (
+                                <span className="ml-1.5 text-xs font-normal text-slate-400 dark:text-slate-500">
+                                  {s.epg_channel_id}
+                                </span>
+                              )}
                             </p>
                             <TechSummary tech={s.tech} className="truncate" />
                           </td>
-                          <td className="px-4 py-2.5 text-slate-500 dark:text-slate-400">
-                            {s.instanceName}
-                            {s.epg_channel_id && (
-                              <p className="text-xs text-slate-400 dark:text-slate-500">{s.epg_channel_id}</p>
-                            )}
-                          </td>
+                          <td className="px-4 py-2.5 text-slate-500 dark:text-slate-400">{s.instanceName}</td>
                           <td className="px-4 py-2.5">
                             <Badge tone="slate">{titleCase(s.stream_type)}</Badge>
                           </td>
