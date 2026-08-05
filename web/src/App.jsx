@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Routes, Route } from "react-router-dom";
 import Overview from "./pages/Overview.jsx";
-import Live from "./pages/Live.jsx";
 import History from "./pages/History.jsx";
 import Leaderboard from "./pages/Leaderboard.jsx";
 import Users from "./pages/Users.jsx";
@@ -30,7 +29,6 @@ export default function App() {
     <ConfigProvider config={config}>
       <Routes>
         <Route path="/" element={<Overview pollIntervalMs={pollIntervalMs} />} />
-        <Route path="/live" element={<Live pollIntervalMs={pollIntervalMs} />} />
         <Route path="/history" element={<History pollIntervalMs={pollIntervalMs} />} />
         <Route path="/leaderboard" element={<Leaderboard pollIntervalMs={pollIntervalMs} />} />
         <Route path="/users" element={<Users pollIntervalMs={pollIntervalMs} />} />
