@@ -94,6 +94,11 @@ export default function History({ pollIntervalMs }) {
                       </td>
                       <td className="px-4 py-2.5 font-medium text-slate-800 dark:text-slate-100">
                         {e.display_name || e.username}
+                        {e.display_name && e.display_name !== e.username && (
+                          <span className="ml-1.5 text-xs font-normal text-slate-400 dark:text-slate-500">
+                            {e.username}
+                          </span>
+                        )}
                       </td>
                       <td className="max-w-[16rem] truncate px-4 py-2.5">{e.stream_title}</td>
                       <td className="px-4 py-2.5">
