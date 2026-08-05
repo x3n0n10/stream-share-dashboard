@@ -2,7 +2,6 @@ import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import {
   IconOverview,
-  IconPlay,
   IconHistory,
   IconTrophy,
   IconUsers,
@@ -19,7 +18,6 @@ import { useConfig } from "../lib/ConfigContext.jsx";
 
 const NAV_ITEMS = [
   { to: "/", label: "Overview", icon: IconOverview, end: true },
-  { to: "/live", label: "Live Now", icon: IconPlay },
   { to: "/history", label: "History", icon: IconHistory },
   { to: "/leaderboard", label: "Leaderboard", icon: IconTrophy },
   { to: "/users", label: "Users", icon: IconUsers },
@@ -31,7 +29,7 @@ const NAV_ITEMS = [
 // Mobile bottom nav only has room for a handful of items — the rest stay
 // reachable through the hamburger drawer. Filtering (rather than a fixed
 // slice) keeps this list in sync if NAV_ITEMS is ever reordered.
-const MOBILE_NAV_PATHS = ["/", "/live", "/vpn", "/vod"];
+const MOBILE_NAV_PATHS = ["/", "/history", "/vpn", "/vod"];
 const MOBILE_NAV_ITEMS = NAV_ITEMS.filter((item) => MOBILE_NAV_PATHS.includes(item.to));
 
 function NavList({ onNavigate }) {

@@ -122,13 +122,12 @@ DASHBOARD_IMAGE=ghcr.io/x3n0n10/stream-share-dashboard:latest \
 ## What it shows
 
 - **Overview** — global totals plus a live status card per instance and a
-  "now playing" table merged across all of them.
-- **Live Now** — every currently active stream, with viewers, grouped across
-  instances. Both this and Overview's "now playing" table show a compact
-  technical summary (video codec/resolution/fps, audio track languages,
-  subtitle languages) under the title whenever the instance reports it —
-  requires a stream-share version that probes and returns stream tech info;
-  older instances simply show nothing extra.
+  "now playing" table merged across all of them: title, instance, EPG
+  channel ID, viewer count and names, and how long each stream's been
+  running. Shows a compact technical summary (video codec/resolution/fps,
+  audio track languages, subtitle languages) under the title whenever the
+  instance reports it — requires a stream-share version that probes and
+  returns stream tech info; older instances simply show nothing extra.
 - **History** — a merged, searchable, chronological watch-history feed.
 - **Leaderboard** — top titles and top viewers, summed across instances for
   the selected time window.

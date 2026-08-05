@@ -141,14 +141,32 @@ export default function Overview({ pollIntervalMs }) {
                             </p>
                             <TechSummary tech={s.tech} className="truncate" />
                           </td>
-                          <td className="px-4 py-2.5 text-slate-500 dark:text-slate-400">{s.instanceName}</td>
+                          <td className="px-4 py-2.5 text-slate-500 dark:text-slate-400">
+                            {s.instanceName}
+                            {s.epg_channel_id && (
+                              <p className="text-xs text-slate-400 dark:text-slate-500">{s.epg_channel_id}</p>
+                            )}
+                          </td>
                           <td className="px-4 py-2.5">
                             <Badge tone="slate">{titleCase(s.stream_type)}</Badge>
                           </td>
                           <td className="px-4 py-2.5">
-                            <span title={s.viewers?.join(", ")} className="font-medium">
+                            <span className="flex items-center gap-1 font-medium">
+                              <IconUsers className="h-3.5 w-3.5 text-slate-400" />
                               {s.viewer_count}
                             </span>
+                            {s.viewers?.length > 0 && (
+                              <div className="mt-1 flex max-w-[10rem] flex-wrap gap-1">
+                                {s.viewers.map((v) => (
+                                  <span
+                                    key={v}
+                                    className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                                  >
+                                    {v}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                           </td>
                           <td className="px-4 py-2.5 text-slate-500 dark:text-slate-400">{s.duration}</td>
                         </tr>
