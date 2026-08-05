@@ -70,7 +70,7 @@ export default function Layout({ title, children, headerExtra }) {
       {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col border-r border-slate-200 bg-white py-5 dark:border-slate-800 dark:bg-slate-900 lg:flex">
         <div className="mb-6 flex min-w-0 items-center gap-2 px-4">
-          <span className="text-xl">📡</span>
+          <img src="/logo.svg" alt="" className="h-7 w-7 shrink-0 rounded-lg" />
           <span className="truncate text-sm font-semibold text-slate-900 dark:text-white">
             {siteTitle}
           </span>
@@ -92,7 +92,7 @@ export default function Layout({ title, children, headerExtra }) {
           <div className="absolute inset-y-0 left-0 flex w-64 flex-col bg-white py-5 dark:bg-slate-900">
             <div className="mb-6 flex items-center justify-between gap-2 px-4">
               <div className="flex min-w-0 items-center gap-2">
-                <span className="text-xl">📡</span>
+                <img src="/logo.svg" alt="" className="h-7 w-7 shrink-0 rounded-lg" />
                 <span className="truncate text-sm font-semibold text-slate-900 dark:text-white">
                   {siteTitle}
                 </span>

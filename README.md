@@ -1,3 +1,5 @@
+<p align="center"><img src="web/public/logo.svg" alt="" width="96" height="96"></p>
+
 # stream-share-dashboard
 
 A read-only dashboard for one or more [stream-share](https://github.com/lucasduport/stream-share)
