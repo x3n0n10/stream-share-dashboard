@@ -56,16 +56,39 @@ async function callInstance(instance, path, { timeoutMs, query, method, body } =
   }
 }
 
+// Reads an instance's provider subscription. Normally that is a cache read on
+// the instance, costing the IPTV provider nothing.
+//
+// With refresh, the instance re-reads it from the provider instead — a live
+// call, so it can outlast INSTANCE_TIMEOUT_MS on a slow provider where the
+// cached read never would. Rather than let that blank the subscription panel on
+// exactly the load that asked for fresh numbers, fall back to the cached read
+// and show the last known state.
+async function fetchProviderInfo(instance, { timeoutMs, refresh }) {
+  if (!refresh) return callInstance(instance, "/provider", { timeoutMs });
+  try {
+    return await callInstance(instance, "/provider", { timeoutMs, query: { refresh: "true" } });
+  } catch {
+    return callInstance(instance, "/provider", { timeoutMs });
+  }
+}
+
 // Fetches the small set of endpoints the Overview page needs in one shot.
 // Failures are captured per-call (Promise.allSettled) so a partially-broken
 // instance (e.g. DB down but sessions up) still surfaces what it can.
-export async function fetchInstanceSnapshot(instance, { timeoutMs, hours }) {
-  const [instanceInfo, status, stats] = await Promise.allSettled([
+export async function fetchInstanceSnapshot(instance, { timeoutMs, hours, refreshProvider }) {
+  const [instanceInfo, status, stats, provider] = await Promise.allSettled([
     callInstance(instance, "/instance", { timeoutMs }),
     callInstance(instance, "/status", { timeoutMs }),
     callInstance(instance, "/stats", { timeoutMs, query: { hours } }),
+    fetchProviderInfo(instance, { timeoutMs, refresh: refreshProvider }),
   ]);
 
+  // /provider is deliberately excluded from the error/online verdict: an
+  // instance running a stream-share older than the endpoint returns 404, and a
+  // plain-M3U deployment has no subscription at all. Neither is a fault, and
+  // neither should make an otherwise healthy instance look broken — the UI just
+  // omits the subscription block when this is null.
   const firstError = [instanceInfo, status, stats].find((r) => r.status === "rejected");
 
   return {
@@ -77,6 +100,10 @@ export async function fetchInstanceSnapshot(instance, { timeoutMs, hours }) {
     instance: instanceInfo.status === "fulfilled" ? instanceInfo.value : null,
     status: status.status === "fulfilled" ? status.value : null,
     stats: stats.status === "fulfilled" ? stats.value : null,
+    // The instance serves this from its own cache (it refreshes upstream on a
+    // slow background timer), so polling it every tick costs the IPTV provider
+    // nothing — see fetchProviderInfo for the cold-load exception.
+    provider: provider.status === "fulfilled" ? provider.value : null,
   };
 }
 

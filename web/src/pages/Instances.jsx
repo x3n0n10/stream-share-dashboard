@@ -1,5 +1,6 @@
 import Layout from "../components/Layout.jsx";
 import { Card, Badge, StatusDot, ErrorNote, Skeleton } from "../components/common.jsx";
+import { SubscriptionDetail } from "../components/Subscription.jsx";
 import { IconRefresh } from "../components/Icons.jsx";
 import { api } from "../lib/api.js";
 import { usePolling } from "../lib/usePolling.js";
@@ -82,6 +83,8 @@ export default function Instances({ pollIntervalMs }) {
                     <FeatureBadge on={i.instance?.vod_cache_enabled} label="VOD cache" />
                     <FeatureBadge on={i.instance?.catchup_enabled} label="Catchup" />
                   </div>
+                  {/* Only for Xtream-backed instances; renders nothing otherwise. */}
+                  <SubscriptionDetail provider={i.provider} />
                 </>
               ) : (
                 <p className="mt-4 text-sm text-rose-500 dark:text-rose-400">{i.error || "Unreachable"}</p>

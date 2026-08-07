@@ -130,6 +130,9 @@ DASHBOARD_IMAGE=ghcr.io/x3n0n10/stream-share-dashboard:latest \
   audio track languages, subtitle languages) under the title whenever the
   instance reports it — requires a stream-share version that probes and
   returns stream tech info; older instances simply show nothing extra.
+  Each instance card also carries that instance's **provider subscription** —
+  state, time left, and connection usage; see
+  [Provider subscription](#provider-subscription) below.
 - **History** — a merged, searchable, chronological watch-history feed.
 - **Leaderboard** — top titles and top viewers, summed across instances for
   the selected time window.
@@ -149,7 +152,8 @@ DASHBOARD_IMAGE=ghcr.io/x3n0n10/stream-share-dashboard:latest \
   stream-share version with the IP-alias feature; older instances just show
   raw IPs as before.
 - **Instances** — per-instance health, uptime, and enabled features
-  (Discord, VOD cache, catchup).
+  (Discord, VOD cache, catchup), plus a fuller version of the same
+  [provider subscription](#provider-subscription) panel.
 - **VPN** — optional; shows [gluetun](https://github.com/qdm12/gluetun)'s
   connection status and exit IP/location, with Start/Stop/Reconnect buttons.
   Only appears once configured (see below); otherwise shows how to enable it.
@@ -170,6 +174,45 @@ DASHBOARD_IMAGE=ghcr.io/x3n0n10/stream-share-dashboard:latest \
 
 All pages except VOD Search auto-refresh (`POLL_INTERVAL_MS`, default 15s)
 and work down to phone-sized screens.
+
+### Provider subscription
+
+Xtream providers report the state of the account behind each instance, and
+stream-share exposes it at `/api/internal/provider`. The dashboard pulls it in
+with the rest of each instance's snapshot and shows it on the instance blocks:
+
+- **State** — a badge carrying the provider's own wording (`Active`,
+  `Expired`, `Banned`, …), plus a separate `trial` badge when it applies. It
+  turns amber in the last week before expiry and red once the subscription is
+  expired, the provider is rejecting the instance's credentials, or the
+  account is otherwise not active.
+- **Time left** — "85 days left (Oct 31, 2026)", "Expires today", "Expired 3
+  days ago", or "No expiry date" for an account the provider reports as
+  unlimited.
+- **Connections** — a meter of the provider's connection allowance, split
+  into the connections *this* instance is holding open (one per active shared
+  stream, whatever the viewer count) and everything else on the account. The
+  split is the interesting part: it shows the multiplexing working, and it
+  shows when the limit is being spent on a device that isn't this instance.
+  The meter turns amber at the limit and red past it — the caption underneath
+  always spells the numbers out, so the colors are never the only signal.
+- **Freshness** — instances serve this from their own cache and refresh it
+  upstream on a slow timer, so the dashboard's polling costs your provider
+  nothing. The one exception is opening the dashboard: the **first** request
+  of a page load asks each instance to re-read its subscription from the
+  provider, so what you're looking at when you sit down is current rather
+  than up to a refresh-interval old. That's per browser page load — a real
+  reload counts, moving between dashboard pages, changing the time window and
+  the auto-refresh poll do not. Instances rate-limit real provider reads
+  anyway (at most one every 30s, never concurrent), so even reloading
+  repeatedly can't turn into provider traffic. If an instance's last refresh
+  failed, the panel keeps showing the last known values with an explicit note
+  rather than passing stale numbers off as current.
+
+None of this is required: an instance with no Xtream provider (a plain M3U
+proxy), or one running a stream-share older than the endpoint, simply shows no
+subscription block, and that never counts against the instance's online/error
+state.
 
 ## Gluetun VPN control (optional)
 

@@ -22,6 +22,11 @@ function hoursParam(req, fallback = 24) {
   return Number.isFinite(raw) ? raw : fallback;
 }
 
+// The usual spellings of a boolean query parameter.
+function isTruthy(value) {
+  return ["1", "true", "yes", "on"].includes(String(value).trim().toLowerCase());
+}
+
 // Wraps a per-instance settled result into a uniform {instance, error, data} shape.
 function settle(instance, result) {
   if (result.status === "fulfilled") {
@@ -44,10 +49,17 @@ export function createRouter(config) {
   });
 
   // One combined snapshot per instance: identity + live status + windowed stats.
+  //
+  // ?refresh=1 additionally asks each instance to re-read its subscription from
+  // the IPTV provider instead of serving its cached copy. The frontend sends it
+  // on the first overview call of a page load only (see api.js); instances
+  // rate-limit real provider reads either way, so a reload-happy operator still
+  // cannot turn this into provider traffic.
   router.get("/overview", async (req, res) => {
     const hours = hoursParam(req, 24);
+    const refreshProvider = isTruthy(req.query.refresh);
     const snapshots = await Promise.all(
-      config.instances.map((instance) => fetchInstanceSnapshot(instance, { ...opts, hours }))
+      config.instances.map((instance) => fetchInstanceSnapshot(instance, { ...opts, hours, refreshProvider }))
     );
     res.json({ hours, instances: snapshots });
   });
