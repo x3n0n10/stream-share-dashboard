@@ -60,12 +60,18 @@ async function callInstance(instance, path, { timeoutMs, query, method, body } =
 // Failures are captured per-call (Promise.allSettled) so a partially-broken
 // instance (e.g. DB down but sessions up) still surfaces what it can.
 export async function fetchInstanceSnapshot(instance, { timeoutMs, hours }) {
-  const [instanceInfo, status, stats] = await Promise.allSettled([
+  const [instanceInfo, status, stats, provider] = await Promise.allSettled([
     callInstance(instance, "/instance", { timeoutMs }),
     callInstance(instance, "/status", { timeoutMs }),
     callInstance(instance, "/stats", { timeoutMs, query: { hours } }),
+    callInstance(instance, "/provider", { timeoutMs }),
   ]);
 
+  // /provider is deliberately excluded from the error/online verdict: an
+  // instance running a stream-share older than the endpoint returns 404, and a
+  // plain-M3U deployment has no subscription at all. Neither is a fault, and
+  // neither should make an otherwise healthy instance look broken — the UI just
+  // omits the subscription block when this is null.
   const firstError = [instanceInfo, status, stats].find((r) => r.status === "rejected");
 
   return {
@@ -77,6 +83,10 @@ export async function fetchInstanceSnapshot(instance, { timeoutMs, hours }) {
     instance: instanceInfo.status === "fulfilled" ? instanceInfo.value : null,
     status: status.status === "fulfilled" ? status.value : null,
     stats: stats.status === "fulfilled" ? stats.value : null,
+    // The instance serves this from its own cache (it refreshes upstream on a
+    // slow background timer), so polling it every tick costs the IPTV provider
+    // nothing.
+    provider: provider.status === "fulfilled" ? provider.value : null,
   };
 }
 

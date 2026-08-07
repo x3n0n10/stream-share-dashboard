@@ -44,6 +44,15 @@ export function formatDateTime(isoString) {
   });
 }
 
+// Date only — for values where the time of day is noise, such as a
+// subscription's expiry date.
+export function formatDate(isoString) {
+  if (!isoString) return "—";
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
+
 export function formatNumber(n) {
   return new Intl.NumberFormat().format(n || 0);
 }

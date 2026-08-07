@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import Layout from "../components/Layout.jsx";
 import HoursSelect from "../components/HoursSelect.jsx";
 import { Card, StatTile, Badge, StatusDot, EmptyState, ErrorNote, Skeleton, TechSummary } from "../components/common.jsx";
+import { SubscriptionSummary } from "../components/Subscription.jsx";
 import { IconOverview, IconPlay, IconUsers, IconHistory, IconRefresh, IconTag } from "../components/Icons.jsx";
 import { api } from "../lib/api.js";
 import { usePolling } from "../lib/usePolling.js";
@@ -115,20 +116,25 @@ export default function Overview({ pollIntervalMs }) {
                     <Badge tone={i.online ? "green" : "rose"}>{i.online ? "online" : "offline"}</Badge>
                   </div>
                   {i.online ? (
-                    <dl className="mt-3 grid grid-cols-2 gap-y-1.5 text-sm">
-                      <dt className="text-slate-400">Streams</dt>
-                      <dd className="text-right font-medium text-slate-700 dark:text-slate-200">
-                        {i.stats?.active_streams ?? i.status?.streams_count ?? 0}
-                      </dd>
-                      <dt className="text-slate-400">Viewers</dt>
-                      <dd className="text-right font-medium text-slate-700 dark:text-slate-200">
-                        {i.stats?.active_viewers ?? i.status?.users_count_active ?? 0}
-                      </dd>
-                      <dt className="text-slate-400">Uptime</dt>
-                      <dd className="text-right font-medium text-slate-700 dark:text-slate-200">
-                        {i.instance ? formatDuration(i.instance.uptime_seconds) : "—"}
-                      </dd>
-                    </dl>
+                    <>
+                      <dl className="mt-3 grid grid-cols-2 gap-y-1.5 text-sm">
+                        <dt className="text-slate-400">Streams</dt>
+                        <dd className="text-right font-medium text-slate-700 dark:text-slate-200">
+                          {i.stats?.active_streams ?? i.status?.streams_count ?? 0}
+                        </dd>
+                        <dt className="text-slate-400">Viewers</dt>
+                        <dd className="text-right font-medium text-slate-700 dark:text-slate-200">
+                          {i.stats?.active_viewers ?? i.status?.users_count_active ?? 0}
+                        </dd>
+                        <dt className="text-slate-400">Uptime</dt>
+                        <dd className="text-right font-medium text-slate-700 dark:text-slate-200">
+                          {i.instance ? formatDuration(i.instance.uptime_seconds) : "—"}
+                        </dd>
+                      </dl>
+                      {/* Renders nothing for instances with no Xtream provider,
+                          or running a stream-share without the endpoint. */}
+                      <SubscriptionSummary provider={i.provider} />
+                    </>
                   ) : (
                     <p className="mt-3 text-xs text-rose-500 dark:text-rose-400">{i.error || "Unreachable"}</p>
                   )}
