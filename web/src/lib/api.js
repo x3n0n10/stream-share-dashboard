@@ -25,9 +25,33 @@ async function post(path, payload) {
   return body;
 }
 
+// True until the first /api/overview of this page load comes back. It asks the
+// instances to re-read their provider subscription from the provider instead of
+// serving their cached copy, so a freshly opened dashboard shows current numbers
+// rather than something up to a refresh-interval old.
+//
+// Module state is exactly the right scope: a browser reload resets it (which is
+// what the operator means by "reload the page"), while navigating between
+// dashboard pages, changing the time window, or the 15s poll does not.
+let coldLoad = true;
+
 export const api = {
   config: () => get("/api/config"),
-  overview: (hours) => get("/api/overview", { hours }),
+  overview: async (hours) => {
+    // Claim the cold load before awaiting, not after: a mount can issue two
+    // overview calls in the same tick (the poll interval arrives with the
+    // config and re-runs the effect), and only one of them should force a
+    // provider read. A throw hands the claim back, so a first load that never
+    // landed still forces on its retry.
+    const refresh = coldLoad;
+    coldLoad = false;
+    try {
+      return await get("/api/overview", { hours, refresh: refresh ? 1 : undefined });
+    } catch (err) {
+      if (refresh) coldLoad = true;
+      throw err;
+    }
+  },
   history: (hours, limit) => get("/api/history", { hours, limit }),
   leaderboard: (hours) => get("/api/leaderboard", { hours }),
   users: () => get("/api/users"),

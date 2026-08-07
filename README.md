@@ -197,10 +197,17 @@ with the rest of each instance's snapshot and shows it on the instance blocks:
   The meter turns amber at the limit and red past it — the caption underneath
   always spells the numbers out, so the colors are never the only signal.
 - **Freshness** — instances serve this from their own cache and refresh it
-  upstream on a slow timer, so polling costs your provider nothing. If an
-  instance's last refresh failed, the panel keeps showing the last known
-  values with an explicit note rather than passing stale numbers off as
-  current.
+  upstream on a slow timer, so the dashboard's polling costs your provider
+  nothing. The one exception is opening the dashboard: the **first** request
+  of a page load asks each instance to re-read its subscription from the
+  provider, so what you're looking at when you sit down is current rather
+  than up to a refresh-interval old. That's per browser page load — a real
+  reload counts, moving between dashboard pages, changing the time window and
+  the auto-refresh poll do not. Instances rate-limit real provider reads
+  anyway (at most one every 30s, never concurrent), so even reloading
+  repeatedly can't turn into provider traffic. If an instance's last refresh
+  failed, the panel keeps showing the last known values with an explicit note
+  rather than passing stale numbers off as current.
 
 None of this is required: an instance with no Xtream provider (a plain M3U
 proxy), or one running a stream-share older than the endpoint, simply shows no

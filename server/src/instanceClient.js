@@ -56,15 +56,32 @@ async function callInstance(instance, path, { timeoutMs, query, method, body } =
   }
 }
 
+// Reads an instance's provider subscription. Normally that is a cache read on
+// the instance, costing the IPTV provider nothing.
+//
+// With refresh, the instance re-reads it from the provider instead — a live
+// call, so it can outlast INSTANCE_TIMEOUT_MS on a slow provider where the
+// cached read never would. Rather than let that blank the subscription panel on
+// exactly the load that asked for fresh numbers, fall back to the cached read
+// and show the last known state.
+async function fetchProviderInfo(instance, { timeoutMs, refresh }) {
+  if (!refresh) return callInstance(instance, "/provider", { timeoutMs });
+  try {
+    return await callInstance(instance, "/provider", { timeoutMs, query: { refresh: "true" } });
+  } catch {
+    return callInstance(instance, "/provider", { timeoutMs });
+  }
+}
+
 // Fetches the small set of endpoints the Overview page needs in one shot.
 // Failures are captured per-call (Promise.allSettled) so a partially-broken
 // instance (e.g. DB down but sessions up) still surfaces what it can.
-export async function fetchInstanceSnapshot(instance, { timeoutMs, hours }) {
+export async function fetchInstanceSnapshot(instance, { timeoutMs, hours, refreshProvider }) {
   const [instanceInfo, status, stats, provider] = await Promise.allSettled([
     callInstance(instance, "/instance", { timeoutMs }),
     callInstance(instance, "/status", { timeoutMs }),
     callInstance(instance, "/stats", { timeoutMs, query: { hours } }),
-    callInstance(instance, "/provider", { timeoutMs }),
+    fetchProviderInfo(instance, { timeoutMs, refresh: refreshProvider }),
   ]);
 
   // /provider is deliberately excluded from the error/online verdict: an
@@ -85,7 +102,7 @@ export async function fetchInstanceSnapshot(instance, { timeoutMs, hours }) {
     stats: stats.status === "fulfilled" ? stats.value : null,
     // The instance serves this from its own cache (it refreshes upstream on a
     // slow background timer), so polling it every tick costs the IPTV provider
-    // nothing.
+    // nothing — see fetchProviderInfo for the cold-load exception.
     provider: provider.status === "fulfilled" ? provider.value : null,
   };
 }
