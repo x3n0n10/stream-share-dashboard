@@ -119,8 +119,13 @@ export default function History({ pollIntervalMs }) {
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {filtered.map((e, idx) => (
                     <tr key={`${e.instance_id}-${idx}-${e.start_time}`}>
-                      <td className="whitespace-nowrap px-4 py-2.5 text-slate-500 dark:text-slate-400">
-                        {relativeTime ? formatRelativeTime(e.start_time) : formatDateTime(e.start_time)}
+                      <td
+                        className="whitespace-nowrap px-4 py-2.5 text-slate-500 dark:text-slate-400"
+                        title={relativeTime ? formatDateTime(e.start_time) : undefined}
+                      >
+                        {relativeTime
+                          ? formatRelativeTime(e.start_time, { withTime: true })
+                          : formatDateTime(e.start_time)}
                       </td>
                       <td className="px-4 py-2.5 font-medium text-slate-800 dark:text-slate-100">
                         {e.display_name || e.username}
