@@ -8,7 +8,10 @@ export function formatDuration(totalSeconds) {
   return `${sec}s`;
 }
 
-export function formatRelativeTime(isoString) {
+// withTime appends the local time of day (e.g. "yesterday, 19:35") once the
+// relative label drops to day/month/year granularity, since at that point
+// the label alone no longer conveys what time it happened.
+export function formatRelativeTime(isoString, { withTime = false } = {}) {
   if (!isoString) return "—";
   const date = new Date(isoString);
   if (Number.isNaN(date.getTime())) return "—";
@@ -26,7 +29,12 @@ export function formatRelativeTime(isoString) {
   for (const [unit, secs] of units) {
     if (abs >= secs) {
       const value = Math.round(diffSec / secs);
-      return new Intl.RelativeTimeFormat("en", { numeric: "auto" }).format(-value, unit);
+      const relative = new Intl.RelativeTimeFormat("en", { numeric: "auto" }).format(-value, unit);
+      if (withTime && unit !== "hour" && unit !== "minute") {
+        const time = date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+        return `${relative}, ${time}`;
+      }
+      return relative;
     }
   }
   return "just now";
