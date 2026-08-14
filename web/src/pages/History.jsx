@@ -10,6 +10,14 @@ import { formatDuration, formatDateTime, formatRelativeTime, titleCase } from ".
 export default function History({ pollIntervalMs }) {
   const [hours, setHours] = useState(24);
   const [search, setSearch] = useState("");
+  const [relativeTime, setRelativeTime] = useState(
+    () => localStorage.getItem("historyWhenFormat") === "relative"
+  );
+
+  const toggleWhenFormat = (relative) => {
+    setRelativeTime(relative);
+    localStorage.setItem("historyWhenFormat", relative ? "relative" : "date");
+  };
   const { data, error, loading, updatedAt, refresh } = usePolling(
     () => api.history(hours, 200),
     pollIntervalMs,
@@ -35,6 +43,28 @@ export default function History({ pollIntervalMs }) {
       headerExtra={
         <>
           <HoursSelect hours={hours} onChange={setHours} />
+          <div className="flex items-center rounded-lg border border-slate-200 bg-white p-0.5 text-xs font-medium dark:border-slate-700 dark:bg-slate-900">
+            <button
+              onClick={() => toggleWhenFormat(false)}
+              className={`rounded-md px-2 py-1 transition-colors ${
+                !relativeTime
+                  ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+                  : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+              }`}
+            >
+              Date
+            </button>
+            <button
+              onClick={() => toggleWhenFormat(true)}
+              className={`rounded-md px-2 py-1 transition-colors ${
+                relativeTime
+                  ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+                  : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+              }`}
+            >
+              Relative
+            </button>
+          </div>
           <button
             onClick={refresh}
             className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
@@ -90,7 +120,7 @@ export default function History({ pollIntervalMs }) {
                   {filtered.map((e, idx) => (
                     <tr key={`${e.instance_id}-${idx}-${e.start_time}`}>
                       <td className="whitespace-nowrap px-4 py-2.5 text-slate-500 dark:text-slate-400">
-                        {formatDateTime(e.start_time)}
+                        {relativeTime ? formatRelativeTime(e.start_time) : formatDateTime(e.start_time)}
                       </td>
                       <td className="px-4 py-2.5 font-medium text-slate-800 dark:text-slate-100">
                         {e.display_name || e.username}
