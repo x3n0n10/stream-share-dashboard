@@ -293,7 +293,11 @@ export default function Aliases({ pollIntervalMs }) {
                     const isOpen = !!expanded[g.ip_address];
                     return (
                       <Fragment key={g.ip_address}>
-                        <tr>
+                        <tr
+                          className={`transition-opacity duration-150 ${
+                            groupState.deleting ? "opacity-40" : "opacity-100"
+                          }`}
+                        >
                           <td className="px-4 py-2.5 font-mono text-xs text-slate-600 dark:text-slate-300">
                             {g.ip_address}
                           </td>
@@ -341,7 +345,12 @@ export default function Aliases({ pollIntervalMs }) {
                             const key = entryKey(a);
                             const state = rowState[key] || {};
                             return (
-                              <tr key={key} className="bg-slate-50/60 dark:bg-slate-800/30">
+                              <tr
+                                key={key}
+                                className={`bg-slate-50/60 transition-opacity duration-150 dark:bg-slate-800/30 ${
+                                  state.deleting ? "opacity-40" : "opacity-100"
+                                }`}
+                              >
                                 <td className="px-4 py-2 pl-8 text-xs text-slate-400 dark:text-slate-500" colSpan={2}>
                                   <Badge tone="slate">{a.alias}</Badge>
                                 </td>
