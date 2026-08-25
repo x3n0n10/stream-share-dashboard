@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
+import { useDelayedUnmount } from "../lib/useDelayedUnmount.js";
 import {
   IconOverview,
   IconHistory,
@@ -61,6 +62,7 @@ function NavList({ onNavigate }) {
 
 export default function Layout({ title, children, headerExtra }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const drawerMounted = useDelayedUnmount(drawerOpen, 220);
   const [theme, toggleTheme] = useTheme();
   const config = useConfig();
   const siteTitle = config?.title || "Stream Share Dashboard";
@@ -82,14 +84,20 @@ export default function Layout({ title, children, headerExtra }) {
       </aside>
 
       {/* Mobile drawer */}
-      {drawerOpen && (
+      {drawerMounted && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <div
-            className="absolute inset-0 bg-black/40"
+            className={`absolute inset-0 bg-black/40 transition-opacity duration-200 ease-out ${
+              drawerOpen ? "opacity-100" : "opacity-0"
+            }`}
             onClick={() => setDrawerOpen(false)}
             aria-hidden="true"
           />
-          <div className="absolute inset-y-0 left-0 flex w-64 flex-col bg-white py-5 dark:bg-slate-900">
+          <div
+            className={`absolute inset-y-0 left-0 flex w-64 flex-col bg-white py-5 transition-transform duration-200 ease-drawer motion-reduce:transition-opacity dark:bg-slate-900 ${
+              drawerOpen ? "translate-x-0" : "-translate-x-full"
+            }`}
+          >
             <div className="mb-6 flex items-center justify-between gap-2 px-4">
               <div className="flex min-w-0 items-center gap-2">
                 <img src="/logo.svg" alt="" className="h-7 w-7 shrink-0 rounded-lg" />

@@ -142,12 +142,12 @@ export default function Vpn({ pollIntervalMs }) {
                   {running ? "Connected" : stopped ? "Disconnected" : vpnStatus || "Unknown"}
                 </p>
                 {pending === "reconnect" && (
-                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">
+                  <span className="animate-fade-scale-in rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">
                     Reconnecting…
                   </span>
                 )}
                 {settling && (
-                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">
+                  <span className="animate-fade-scale-in rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">
                     Waiting for exit IP…
                   </span>
                 )}
@@ -219,13 +219,19 @@ export default function Vpn({ pollIntervalMs }) {
           >
             {showRaw ? "Hide" : "Show"} raw gluetun response
           </button>
-          {showRaw && (
-            <Card className="overflow-x-auto p-4">
-              <pre className="text-xs text-slate-600 dark:text-slate-300">
-                {JSON.stringify({ vpn: data.vpn, publicIp: data.publicIp }, null, 2)}
-              </pre>
-            </Card>
-          )}
+          <div
+            className={`grid transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none ${
+              showRaw ? "mt-3 grid-rows-[1fr]" : "grid-rows-[0fr]"
+            }`}
+          >
+            <div className="overflow-hidden">
+              <Card className="overflow-x-auto p-4">
+                <pre className="text-xs text-slate-600 dark:text-slate-300">
+                  {JSON.stringify({ vpn: data.vpn, publicIp: data.publicIp }, null, 2)}
+                </pre>
+              </Card>
+            </div>
+          </div>
         </div>
       )}
 

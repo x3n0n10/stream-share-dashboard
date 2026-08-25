@@ -1,4 +1,5 @@
 import { IconAlert } from "./Icons.jsx";
+import { useDelayedUnmount } from "../lib/useDelayedUnmount.js";
 
 export function Card({ children, className = "" }) {
   return (
@@ -156,7 +157,7 @@ export function Button({ children, onClick, tone = "default", disabled, loading 
     <button
       onClick={onClick}
       disabled={disabled || loading}
-      className={`inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${toneClasses[tone]}`}
+      className={`inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-[background-color,transform] duration-150 ease-out active:scale-[0.97] motion-reduce:active:scale-100 disabled:cursor-not-allowed disabled:opacity-50 ${toneClasses[tone]}`}
     >
       {loading && (
         <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -167,11 +168,22 @@ export function Button({ children, onClick, tone = "default", disabled, loading 
 }
 
 export function ConfirmDialog({ open, title, body, confirmLabel, tone = "rose", onConfirm, onCancel }) {
-  if (!open) return null;
+  const mounted = useDelayedUnmount(open, 150);
+  if (!mounted) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-black/50" onClick={onCancel} aria-hidden="true" />
-      <div className="relative w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-800 dark:bg-slate-900">
+      <div
+        className={`absolute inset-0 bg-black/50 transition-opacity duration-150 ease-out ${
+          open ? "opacity-100" : "opacity-0"
+        }`}
+        onClick={onCancel}
+        aria-hidden="true"
+      />
+      <div
+        className={`relative w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-xl transition-[opacity,transform] duration-150 ease-out-smooth motion-reduce:transform-none dark:border-slate-800 dark:bg-slate-900 ${
+          open ? "scale-100 opacity-100" : "scale-95 opacity-0"
+        }`}
+      >
         <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{title}</h3>
         <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{body}</p>
         <div className="mt-5 flex justify-end gap-2">
